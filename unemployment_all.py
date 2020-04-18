@@ -27,11 +27,34 @@ def extract_record(df,yr):
     return df_p
 
 
+def extract_record_b03(df,yr):
+    col_dict = {'HHID':(0,15),'Person_type':(160,162),'Interview_Status':(56,58),'Month':(15,17),'Age':(121,123),'Sex':(128,130),'Race':(138,140),'Hispanic':(156,158),'LF_recode':(179,181),'LF_recode2':(392,394),'Civilian_LF':(386,388),'Employed_nonfarm':(479,481),'Have_job':(205,207),'Unpaid_family_work':(183,185),'Job_search':(400,402),'Discouraged':(388,390),'Retired':(566,568),'Disabled':(203,205),'Situation':(568,570),'FT_PT':(396,398),'FT_PT_status':(415,417),'Detailed_reason_part_time':(404,406),'Main_reason_part_time':(228,230),'Main_reason_not_full_time':(230,232),'Want_job':(346,348),'Want_job_ft':(226,228),'Want_job_ft_pt':(199,201),'Want_job_nilf':(417,419),'Reason_unemployment':(411,413),'Reason_not_looking':(348,350),'Hours_per_week':(217,219),'Hours_per_week_last':(242,244),'In_school':(574,576),'In_school_ft_pt':(576,578),'In_school_nilf':(580,582),'State_FIPS':(92,94),'County_FIPS':(100,103),'Metro_Code':(95,100),'Metro_Size':(106,107)}
+
+    df_p = pd.DataFrame()
+
+
+    for k,v in col_dict.items():
+        df_p[k] = [i[0][v[0]:v[1]] for i in df.values]
+
+    df_p['Year'] = yr
+    df_p['State_FIPS'] = df_p['State_FIPS'].astype(str).str.strip().apply(lambda x: str(x).zfill(2) if x != '' else '')
+    df_p['County_FIPS'] = df_p['County_FIPS'].astype(str).str.strip().apply(lambda x: str(x).zfill(3) if x != '' else '')
+
+    df_p['FIPS'] = df_p['State_FIPS']+df_p['County_FIPS']
+
+    return df_p
+
+
 def var_mapper(df_cps):
     person_mapper = {' 1':'Child',' 2':'Adult Civilian',' 3':'Adult Armed Forces'}
     sex_mapper = {' 1':'Male',' 2':'Female'}
     race_mapper = {' 1':'White Only', ' 2':'Black Only', ' 3':'American Indian, Alaskan Native Only', ' 4':'Asian Only', ' 5':'Hawaiian/Pacific Islander Only', ' 6':'White-Black', ' 7':'White-AI', ' 8':'White-Asian', ' 9':'White-HP', '10':'Black-AI', '11':'Black-Asian', '12':'Black-HP', '13':'AI-Asian', '14':'AI-HP', '15':'Asian-HP', '16':'W-B-AI', '17':'W-B-A', '18':'W-B-HP', '19':'W-AI-A', '20':'W-AI-HP', '21':'W-A-HP', '22':'B-AI-A', '23':'W-B-AI-A', '24':'W-AI-A-HP', '25':'Other 3 Race Combinations', '26':'Other 4 and 5 Race Combinations'}
-    hispanic_mapper = {' 1':'Mexican', ' 2':'Peurto Rican',' 3':'Cuban',' 4':'Central/South American', ' 5':'Other Spanish'}
+
+
+    if year < 2003:
+        hispanic_mapper = {' 1':'Hispanic', ' 2':'Not Hispanic'}
+    else:
+        hispanic_mapper = {' 1':'Mexican', ' 2':'Peurto Rican',' 3':'Cuban',' 4':'Central/South American', ' 5':'Other Spanish'}
     lf_recode_mapper = {' 1':'Employed - at work', ' 2':'Employed - absent', ' 3':'Unemployed - on layoff', ' 4':'Unemployed - looking', ' 5':'Not in labor force - retired', ' 6':'Not in labor force - disabled', ' 7':'Not in labor force - other'}
     lf_recode2_mapper = {' 1':'Employed', ' 2':'Unemployed', ' 3':'NILF - discouraged', ' 4':'NILF - other'}
     civilian_lf_mapper = {' 1':'In Civilian LF', ' 2':'Not In Civilian LF'}
@@ -225,10 +248,13 @@ if __name__=='__main__':
 
     if not os.path.isfile(pickle_path+urate_pickle):
 
-        for year in range(2003,2019):
+        for year in range(2000,2020):
             for m in months:
                 df_cps = pd.read_csv(fp+str(year)+'/'+m+str(year)[-2:]+'pub.dat')
-                df_cps = extract_record(df_cps,str(year))
+                if year < 2003:
+                    df_cps = extract_record_b03(df_cps,str(year))
+                else:
+                    df_cps = extract_record(df_cps,str(year))
                 df_cps = var_mapper(df_cps)
                 df_cps = df_cps[(df_cps['Person_type']=='Adult Civilian')]
                 df_cps = turn_int(df_cps)
@@ -242,7 +268,7 @@ if __name__=='__main__':
                 # print(urate)
 
                 #################
-
+                '''
                 df_curr_month = df_month[(df_month.Year==year)&(df_month.Month==months_dict[m])]
 
                 female = (df_curr_month['Total_female_population'].values[0]/df_curr_month['Total_population'].values[0])/(len(df_cps[df_cps['Sex']=='Female'])/len(df_cps))
@@ -311,7 +337,7 @@ if __name__=='__main__':
 
                 # df_cps['Weight'] = np.array(df_sex_weight)*np.array(df_hispanic_weight)*np.array(df_race_weight)*np.array(df_age_weight)
                 # *np.array(df_state_weight)
-
+                '''
                 ###########################################################
                 df_cps.loc[(df_cps['Hispanic']=='-1'),'Hispanic']='Not Hispanic'
                 df_cps.loc[(df_cps['Hispanic']!='Not Hispanic'),'Hispanic']='Hispanic'
@@ -401,6 +427,28 @@ if __name__=='__main__':
 
     print(df_urates)
 
+
+
+########################################################################
+
+    #Compare with official numbers
+    df_fred = pd.read_excel('/home/dhense/PublicData/Economic_analysis/Data/Unemployment_Analysis/UNRATENSA.xls',skiprows=10)
+
+    df_fred['Year'] = df_fred['observation_date'].astype(str).str[:4].astype(int)
+    df_fred['Month'] = df_fred['observation_date'].astype(str).str[5:7].astype(int)
+
+    df_fred = df_fred[(df_fred.Year>2002)&(df_fred.Year<2019)]
+
+    df_fred.drop('observation_date',axis=1,inplace=True)
+
+    df_urates = df_urates.merge(df_fred,on=['Year','Month'])
+    df_urates['UR_weighted'] = round(df_urates['UR_weighted']*100,1)
+
+    #1.2% !!!!!!!!!!
+    percent_off = np.mean(np.abs(df_urates['UR_weighted']-df_urates['UNRATENSA'])/((df_urates['UR_weighted']+df_urates['UNRATENSA'])/2))
+
+
+########################################################################
     #Seasonal decomp
     # df_urates['Date'] = pd.to_datetime(df_urates['Year'].astype(str)+'-'+df_urates['Month'].astype(str))
     #

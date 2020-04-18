@@ -1,4 +1,4 @@
-import os, pickle
+import os, pickle, requests
 import pandas as pd
 import numpy as np
 #Remove scientific notation
@@ -111,8 +111,32 @@ def fips_mapper(df):
     return df
 
 
+# def process_90c(df):
+#     col_dict = {'Year':(0,4),'FIPS':(5,10),'White_nonhispanic_population':(10,19),'Black_nonhispanic_population':(19,28),'American_Indian_Alaska_Native_nonhispanic_population':(28,37),'Asian_Pacific_Islander_nonhispanic_population':(37,46),'White_hispanic_population':(46,55),'Black_hispanic_population':(55,64),'American_Indian_Alaska_Native_hispanic_population':(64,73),'Asian_Pacific_Islander_hispanic_population':(73,82)}
+#
+#     df_p = pd.DataFrame()
+#
+#
+#     for k,v in col_dict.items():
+#         df_p[k] = [i[0][v[0]:v[1]] for i in df.values]
+#
+#     df_p = df_p.astype({'Year':int, 'White_nonhispanic_population':int, 'Black_nonhispanic_population':int, 'American_Indian_Alaska_Native_nonhispanic_population':int, 'Asian_Pacific_Islander_nonhispanic_population':int,'White_hispanic_population':int, 'Black_hispanic_population':int, 'American_Indian_Alaska_Native_hispanic_population':int, 'Asian_Pacific_Islander_hispanic_population':int})
+#
+#     df_p['White_population'] = df_p['White_nonhispanic_population']+df_p['White_hispanic_population']
+#
+#     df_p['Black_population'] = df_p['Black_nonhispanic_population']+df_p['Black_hispanic_population']
+#
+#     df_p['American_Indian_Alaska_Native_population'] = df_p['American_Indian_Alaska_Native_nonhispanic_population']+df_p['American_Indian_Alaska_Native_hispanic_population']
+#
+#     df_p['Asian_Pacific_Islander_population'] = df_p['Asian_Pacific_Islander_nonhispanic_population']+df_p['Asian_Pacific_Islander_hispanic_population']
+#
+#     df_p['Hispanic_population'] = df_p['White_hispanic_population']+df_p['Black_hispanic_population']+df_p['American_Indian_Alaska_Native_hispanic_population']+df_p['Asian_Pacific_Islander_hispanic_population']
+#
+#     df_p = fips_mapper(df_p)
+#
+#     return df_p
 def process_90c(df):
-    col_dict = {'Year':(0,4),'FIPS':(5,10),'White_nonhispanic_population':(10,19),'Black_nonhispanic_population':(19,28),'American_Indian_Alaska_Native_nonhispanic_population':(28,37),'Asian_Pacific_Islander_nonhispanic_population':(37,46),'White_hispanic_population':(46,55),'Black_hispanic_population':(55,64),'American_Indian_Alaska_Native_hispanic_population':(64,73),'Asian_Pacific_Islander_hispanic_population':(73,82)}
+    col_dict = {'Year':(0,2),'FIPS':(4,9),'Age':(10,12),'Race-Sex':(13,14),'Origin':(15,16),'Population':(16,23)}
 
     df_p = pd.DataFrame()
 
@@ -120,22 +144,12 @@ def process_90c(df):
     for k,v in col_dict.items():
         df_p[k] = [i[0][v[0]:v[1]] for i in df.values]
 
-    df_p = df_p.astype({'Year':int, 'White_nonhispanic_population':int, 'Black_nonhispanic_population':int, 'American_Indian_Alaska_Native_nonhispanic_population':int, 'Asian_Pacific_Islander_nonhispanic_population':int,'White_hispanic_population':int, 'Black_hispanic_population':int, 'American_Indian_Alaska_Native_hispanic_population':int, 'Asian_Pacific_Islander_hispanic_population':int})
+    df_p = df_p.astype({'Year':int, 'Age':int, 'Race-Sex':int, 'Origin':int, 'Population':int})
 
-    df_p['White_population'] = df_p['White_nonhispanic_population']+df_p['White_hispanic_population']
-
-    df_p['Black_population'] = df_p['Black_nonhispanic_population']+df_p['Black_hispanic_population']
-
-    df_p['American_Indian_Alaska_Native_population'] = df_p['American_Indian_Alaska_Native_nonhispanic_population']+df_p['American_Indian_Alaska_Native_hispanic_population']
-
-    df_p['Asian_Pacific_Islander_population'] = df_p['Asian_Pacific_Islander_nonhispanic_population']+df_p['Asian_Pacific_Islander_hispanic_population']
-
-    df_p['Hispanic_population'] = df_p['White_hispanic_population']+df_p['Black_hispanic_population']+df_p['American_Indian_Alaska_Native_hispanic_population']+df_p['Asian_Pacific_Islander_hispanic_population']
-
-    df_p = fips_mapper(df_p)
+    df_p['State_FIPS'] = df_p['FIPS'].str[0:2]
+    df_p['County_FIPS'] = df_p['FIPS'].str[2:5]
 
     return df_p
-
 
 def process_00c(df00c):
     for f in os.listdir(filepath+folders[1]+'/County'):
@@ -318,3 +332,41 @@ if __name__=='__main__':
 
     print(df_county_15plus.head())
     '''
+####################################################################
+
+    #1990-2000 county data by age,race,origin,sex
+    url_path = 'https://www2.census.gov/programs-surveys/popest/tables/1990-2000/historical/est90/'
+
+    county90_pop_pickle = 'county90.pickle'
+
+
+
+
+    #Download files
+    # for f in files:
+    #     url = url_path+f
+    #     myfile = requests.get(url)
+    #     open(filepath+folders[0]+'/County/'+f, 'wb').write(myfile.content)
+
+    if not os.path.isfile(picklepath+'intermediate_files/'+county90_pop_pickle):
+
+        files = ['stch-icen'+str(yr)+'.txt' for yr in range(1990,2000)]
+        df90c = pd.DataFrame()
+        for f in files:
+            df = pd.read_csv(filepath+folders[0]+'/County/'+f,header=None)
+            df = process_90c(df)
+            df90c = df90c.append(df)
+
+
+
+        print("...saving pickle")
+        tmp = open(picklepath+'intermediate_files/'+county90_pop_pickle,'wb')
+        pickle.dump(df90c,tmp)
+        tmp.close()
+    else:
+        print("...loading pickle")
+        tmp = open(picklepath+'intermediate_files/'+county90_pop_pickle,'rb')
+        df90c = pickle.load(tmp)
+        tmp.close()
+
+    print(df90c)
