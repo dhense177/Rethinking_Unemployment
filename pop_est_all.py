@@ -1,6 +1,7 @@
 import os, pickle, requests
 import pandas as pd
 import numpy as np
+from common_functions import fips_mapper, cut
 #Remove scientific notation
 pd.set_option('display.float_format', lambda x: '%.1f' % x)
 
@@ -102,40 +103,7 @@ def process_final_age(df_list):
     return df
 
 
-def fips_mapper(df):
-    df_fips = pd.read_excel('/home/dhense/PublicData/FIPS.xlsx')
-    df_fips.FIPS = df_fips.FIPS.apply(lambda x: str(x).zfill(5))
-    df_fips['State_and_county'] = df_fips.Name + ' County, ' + df_fips.State
-    df_fips = df_fips[['FIPS','State_and_county']]
-    df = df.merge(df_fips,on='FIPS',how='left')
-    return df
-
-
-# def process_90c(df):
-#     col_dict = {'Year':(0,4),'FIPS':(5,10),'White_nonhispanic_population':(10,19),'Black_nonhispanic_population':(19,28),'American_Indian_Alaska_Native_nonhispanic_population':(28,37),'Asian_Pacific_Islander_nonhispanic_population':(37,46),'White_hispanic_population':(46,55),'Black_hispanic_population':(55,64),'American_Indian_Alaska_Native_hispanic_population':(64,73),'Asian_Pacific_Islander_hispanic_population':(73,82)}
-#
-#     df_p = pd.DataFrame()
-#
-#
-#     for k,v in col_dict.items():
-#         df_p[k] = [i[0][v[0]:v[1]] for i in df.values]
-#
-#     df_p = df_p.astype({'Year':int, 'White_nonhispanic_population':int, 'Black_nonhispanic_population':int, 'American_Indian_Alaska_Native_nonhispanic_population':int, 'Asian_Pacific_Islander_nonhispanic_population':int,'White_hispanic_population':int, 'Black_hispanic_population':int, 'American_Indian_Alaska_Native_hispanic_population':int, 'Asian_Pacific_Islander_hispanic_population':int})
-#
-#     df_p['White_population'] = df_p['White_nonhispanic_population']+df_p['White_hispanic_population']
-#
-#     df_p['Black_population'] = df_p['Black_nonhispanic_population']+df_p['Black_hispanic_population']
-#
-#     df_p['American_Indian_Alaska_Native_population'] = df_p['American_Indian_Alaska_Native_nonhispanic_population']+df_p['American_Indian_Alaska_Native_hispanic_population']
-#
-#     df_p['Asian_Pacific_Islander_population'] = df_p['Asian_Pacific_Islander_nonhispanic_population']+df_p['Asian_Pacific_Islander_hispanic_population']
-#
-#     df_p['Hispanic_population'] = df_p['White_hispanic_population']+df_p['Black_hispanic_population']+df_p['American_Indian_Alaska_Native_hispanic_population']+df_p['Asian_Pacific_Islander_hispanic_population']
-#
-#     df_p = fips_mapper(df_p)
-#
-#     return df_p
-def process_90c(df):
+def process_90c_overall(df):
     col_dict = {'Year':(0,2),'FIPS':(4,9),'Age':(10,12),'Race-Sex':(13,14),'Origin':(15,16),'Population':(16,23)}
 
     df_p = pd.DataFrame()
@@ -150,6 +118,54 @@ def process_90c(df):
     df_p['County_FIPS'] = df_p['FIPS'].str[2:5]
 
     return df_p
+
+
+def process_90c(county90_pop_pickle):
+    if not os.path.isfile(picklepath+'intermediate_files/'+county90_pop_pickle):
+
+        files = ['stch-icen'+str(yr)+'.txt' for yr in range(1990,2000)]
+        df90c = pd.DataFrame()
+        for f in files:
+            df = pd.read_csv(filepath+folders[0]+'/County/'+f,header=None)
+            df = process_90c(df)
+            df90c = df90c.append(df)
+
+        print("...saving pickle")
+        tmp = open(picklepath+'intermediate_files/'+county90_pop_pickle,'wb')
+        pickle.dump(df90c,tmp)
+        tmp.close()
+    else:
+        print("...loading pickle")
+        tmp = open(picklepath+'intermediate_files/'+county90_pop_pickle,'rb')
+        df90c = pickle.load(tmp)
+        tmp.close()
+
+    return df90c
+
+
+def process_90s(df90c):
+    df90c = df90c[df90c['Age']>3].rename(columns={'Age':'Age_group','Origin':'Hispanic'})
+
+    df90c['Age_group'] = df90c['Age_group']-3
+    df90c['Year'] = '19'+df90c['Year'].astype(str)
+    df90c['Year'] = df90c['Year'].astype(int)
+
+    origin_mapper = {1:'Not Hispanic',2:'Hispanic'}
+    df90c = df90c.replace({'Hispanic':origin_mapper})
+
+    df90c.loc[(df90c['Race-Sex'].isin([1,3,5,7])),'Sex'] = 'Male'
+    df90c.loc[(df90c['Race-Sex'].isin([2,4,6,8])),'Sex'] = 'Female'
+
+    df90c.loc[(df90c['Race-Sex'].isin([1,2])),'Race'] = 'White Only'
+    df90c.loc[(df90c['Race-Sex'].isin([3,4])),'Race'] = 'Black Only'
+    df90c.loc[(df90c['Race-Sex'].isin([5,6,7,8])),'Race'] = 'Other'
+
+    df90s = df90c.groupby(['Year','State_FIPS','Sex','Race','Hispanic','Age_group'])['Population'].sum().reset_index()
+
+    df90s = pd.pivot_table(df90s,values='Population',index=['State_FIPS','Sex','Race','Hispanic','Age_group'],columns='Year',aggfunc=np.sum).reset_index().rename(columns = {1990:'POPESTIMATE1990',1991:'POPESTIMATE1991',1992:'POPESTIMATE1992',1993:'POPESTIMATE1993',1994:'POPESTIMATE1994',1995:'POPESTIMATE1995',1996:'POPESTIMATE1996',1997:'POPESTIMATE1997',1998:'POPESTIMATE1998',1999:'POPESTIMATE1999'})
+
+    return df90s
+
 
 def process_00c(df00c):
     for f in os.listdir(filepath+folders[1]+'/County'):
@@ -176,9 +192,7 @@ def process_20plusc(df):
 
     df['FIPS'] = df['State_num'].apply(lambda x: str(x).zfill(2))+df['County_num'].apply(lambda x: str(x).zfill(3))
 
-    df = fips_mapper(df)
-
-    # df['Age_group'] = df['Age_group'].replace({0:'Total',1:'Age 0 to 4 years',2:'Age 5 to 9 years',3:'Age 10 to 14 years',4:'Age 15 to 19 years',5:'Age 20 to 24 years',6:'Age 25 to 29 years',7:'Age 30 to 34 years',8:'Age 35 to 39 years',9:'Age 40 to 44 years',10:'Age 45 to 49 years',11:'Age 50 to 54 years',12:'Age 55 to 59 years',13:'Age 60 to 64 years',14:'Age 65 to 69 years',15:'Age 70 to 74 years',16:'Age 75 to 79 years',17:'Age 80 to 84 years',18:'Age 85 years or older'})
+    df = fips_mapper(df,level='County')
 
     df['White_population'] = df['White_male_population']+df['White_female_population']
 
@@ -198,6 +212,37 @@ def process_20plusc(df):
     return df
 
 
+def process_state(df90s,df00s,df10s):
+    df_state = df00s.merge(df10s,on=['STATE','SEX','ORIGIN','RACE','AGE'],how='left')[['STATE','SEX','ORIGIN','RACE','AGE','POPESTIMATE2000','POPESTIMATE2001', 'POPESTIMATE2002', 'POPESTIMATE2003','POPESTIMATE2004', 'POPESTIMATE2005', 'POPESTIMATE2006','POPESTIMATE2007', 'POPESTIMATE2008', 'POPESTIMATE2009','POPESTIMATE2010','POPESTIMATE2011','POPESTIMATE2012','POPESTIMATE2013','POPESTIMATE2014','POPESTIMATE2015','POPESTIMATE2016','POPESTIMATE2017','POPESTIMATE2018']]
+
+    df_state = df_state[(df_state.STATE>0)&(df_state.SEX>0)&(df_state.ORIGIN>0)&(df_state.RACE>0)&(df_state.AGE>15)]
+
+    sex_mapper = {1:'Male',2:'Female'}
+    hispanic_mapper = {1:'Not Hispanic',2:'Hispanic'}
+    race_mapper =  {1: 'White Only',2 :'Black Only',3:'Other',4:'Other',5:'Other',6:'Other'}
+
+    df_state = df_state.replace({'SEX':sex_mapper, 'ORIGIN':hispanic_mapper, 'RACE':race_mapper})
+
+    df_state = df_state.rename(columns={'AGE':'Age','RACE':'Race','SEX':'Sex','ORIGIN':'Hispanic'})
+
+    df_state['State_FIPS'] = df_state['STATE'].apply(lambda x: str(x).zfill(2))
+
+    df_state = fips_mapper(df_state)
+
+    df_state['Age_group'] = cut(df_state['Age'])
+    df_state.drop(['State','Age'],axis=1,inplace=True)
+    df_state = pd.DataFrame(df_state.groupby(by=['Age_group','Sex','Hispanic','Race','State_FIPS'])[['POPESTIMATE2000','POPESTIMATE2001','POPESTIMATE2002','POPESTIMATE2003','POPESTIMATE2004','POPESTIMATE2005','POPESTIMATE2006','POPESTIMATE2007','POPESTIMATE2008','POPESTIMATE2009','POPESTIMATE2010','POPESTIMATE2011','POPESTIMATE2012','POPESTIMATE2013','POPESTIMATE2014','POPESTIMATE2015','POPESTIMATE2016','POPESTIMATE2017','POPESTIMATE2018']].sum()).reset_index()
+
+    df_state = df_state.merge(df90s,on=['State_FIPS','Age_group','Sex','Hispanic','Race'],how='left')[['Age_group','Sex','Hispanic','Race','State_FIPS','POPESTIMATE1990','POPESTIMATE1991','POPESTIMATE1992','POPESTIMATE1993','POPESTIMATE1994','POPESTIMATE1995','POPESTIMATE1996','POPESTIMATE1997','POPESTIMATE1998','POPESTIMATE1999','POPESTIMATE2000','POPESTIMATE2001','POPESTIMATE2002','POPESTIMATE2003','POPESTIMATE2004','POPESTIMATE2005','POPESTIMATE2006','POPESTIMATE2007','POPESTIMATE2008','POPESTIMATE2009','POPESTIMATE2010','POPESTIMATE2011','POPESTIMATE2012','POPESTIMATE2013','POPESTIMATE2014','POPESTIMATE2015','POPESTIMATE2016','POPESTIMATE2017','POPESTIMATE2018']]
+
+    print("...saving pickle")
+    tmp = open(picklepath+'intermediate_files/'+state_pop_pickle,'wb')
+    pickle.dump(df_state,tmp)
+    tmp.close()
+
+    return df_state
+
+
 
 if __name__=='__main__':
     picklepath = '/home/dhense/PublicData/Economic_analysis/'
@@ -209,6 +254,7 @@ if __name__=='__main__':
     nat_pop_month_pickle = 'nat_pop_month.pickle'
     nat_pop_age_pickle = 'nat_pop_age.pickle'
     state_pop_pickle = 'state_pop.pickle'
+    county90_pop_pickle = 'county90.pickle'
 
 ################### National ###################
 
@@ -252,47 +298,15 @@ if __name__=='__main__':
     pickle.dump(df_age,tmp)
     tmp.close()
 
-################### States ####################
+################### States and Counties #################
 
-    # df00s = pd.read_csv('/home/dhense/PublicData/popest/2000-2010/st-est00int-alldata.csv')
-    #
-    # df00s = df00s[(df00s.STATE>0)&(df00s.DIVISION>0)&(df00s.SEX>0)&(df00s.ORIGIN>0)&(df00s.RACE>0)&(df00s.AGEGRP>0)]
-    #
-    # df00s = pd.DataFrame(df00s.groupby('STATE')[['POPESTIMATE2000','POPESTIMATE2001', 'POPESTIMATE2002', 'POPESTIMATE2003','POPESTIMATE2004', 'POPESTIMATE2005', 'POPESTIMATE2006','POPESTIMATE2007', 'POPESTIMATE2008', 'POPESTIMATE2009']].sum()).reset_index()
-    #
-    # df10s = pd.read_csv('/home/dhense/PublicData/popest/2010-2019/nst-est2019-alldata.csv')
-    #
-    # df10s = df10s[df10s.STATE.isin(np.arange(1,57))][['STATE','NAME','POPESTIMATE2010','POPESTIMATE2011','POPESTIMATE2012','POPESTIMATE2013','POPESTIMATE2014','POPESTIMATE2015','POPESTIMATE2016','POPESTIMATE2017','POPESTIMATE2018','POPESTIMATE2019']]
-    #
-    # df_state = df00s.merge(df10s,on='STATE',how='left')
-    #
-    # print("...saving pickle")
-    # tmp = open(picklepath+'intermediate_files/'+state_pop_pickle,'wb')
-    # pickle.dump(df_state,tmp)
-    # tmp.close()
-
+    df90c = process_90c(county90_pop_pickle)
+    df90s = process_90s(df90c)
     df00s = pd.read_csv('/home/dhense/PublicData/popest/2000-2010/sc-est2009-alldata6-all.csv')
     df10s = pd.read_csv('/home/dhense/PublicData/popest/2010-2019/sc-est2018-alldata6.csv')
 
-    df_state = df00s.merge(df10s,on=['STATE','SEX','ORIGIN','RACE','AGE'],how='left')[['STATE','SEX','ORIGIN','RACE','AGE','POPESTIMATE2000','POPESTIMATE2001', 'POPESTIMATE2002', 'POPESTIMATE2003','POPESTIMATE2004', 'POPESTIMATE2005', 'POPESTIMATE2006','POPESTIMATE2007', 'POPESTIMATE2008', 'POPESTIMATE2009','POPESTIMATE2010','POPESTIMATE2011','POPESTIMATE2012','POPESTIMATE2013','POPESTIMATE2014','POPESTIMATE2015','POPESTIMATE2016','POPESTIMATE2017','POPESTIMATE2018']]
+    df_state = process_state(df90s,df00s,df10s)
 
-    df_state = df_state[(df_state.STATE>0)&(df_state.SEX>0)&(df_state.ORIGIN>0)&(df_state.RACE>0)&(df_state.AGE>15)]
-
-    sex_mapper = {1:'Male',2:'Female'}
-    hispanic_mapper = {1:'Not Hispanic',2:'Hispanic'}
-    race_mapper =  {1: 'White Only',2 :'Black Only',3:'Other',4:'Other',5:'Other',6:'Other'}
-
-    df_state = df_state.replace({'SEX':sex_mapper, 'ORIGIN':hispanic_mapper, 'RACE':race_mapper})
-
-    df_state = df_state.rename(columns={'AGE':'Age','RACE':'Race','SEX':'Sex','ORIGIN':'Hispanic'})
-
-
-    print("...saving pickle")
-    tmp = open(picklepath+'intermediate_files/'+state_pop_pickle,'wb')
-    pickle.dump(df_state,tmp)
-    tmp.close()
-
-################### Counties ####################
 
     '''
     #1990-1999
@@ -332,41 +346,3 @@ if __name__=='__main__':
 
     print(df_county_15plus.head())
     '''
-####################################################################
-
-    #1990-2000 county data by age,race,origin,sex
-    url_path = 'https://www2.census.gov/programs-surveys/popest/tables/1990-2000/historical/est90/'
-
-    county90_pop_pickle = 'county90.pickle'
-
-
-
-
-    #Download files
-    # for f in files:
-    #     url = url_path+f
-    #     myfile = requests.get(url)
-    #     open(filepath+folders[0]+'/County/'+f, 'wb').write(myfile.content)
-
-    if not os.path.isfile(picklepath+'intermediate_files/'+county90_pop_pickle):
-
-        files = ['stch-icen'+str(yr)+'.txt' for yr in range(1990,2000)]
-        df90c = pd.DataFrame()
-        for f in files:
-            df = pd.read_csv(filepath+folders[0]+'/County/'+f,header=None)
-            df = process_90c(df)
-            df90c = df90c.append(df)
-
-
-
-        print("...saving pickle")
-        tmp = open(picklepath+'intermediate_files/'+county90_pop_pickle,'wb')
-        pickle.dump(df90c,tmp)
-        tmp.close()
-    else:
-        print("...loading pickle")
-        tmp = open(picklepath+'intermediate_files/'+county90_pop_pickle,'rb')
-        df90c = pickle.load(tmp)
-        tmp.close()
-
-    print(df90c)
