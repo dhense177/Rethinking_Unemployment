@@ -45,6 +45,10 @@ if __name__=='__main__':
 
     df_incarcerated = df_icpsr.merge(df_corr,on='Year',how='left')
 
+    #Set 2017-2019 figures equal to 2016 figures
+    for y in range(2017,2020):
+        df_incarcerated.loc[22+y-2017] = [y] + [i for i in df_incarcerated[df_incarcerated['Year']==2016][['WHITEM','WHITEF','BLACKM','BLACKF','HISPM','HISPF','TOTRACEM','TOTRACEF','TOTWHITE','TOTBLACK','TOTHISP','TOTRACE','INCARCERATED']].values[0]]
+
 
     print("...saving pickle")
     tmp = open('/home/dhense/PublicData/Economic_analysis/intermediate_files/'+incarcerated_pickle,'wb')

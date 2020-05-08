@@ -11,7 +11,7 @@ pd.set_option('display.float_format', lambda x: '%.4f' % x)
 
 
 def extract_record(df,yr,m):
-    col_dict = {'HHID':(0,15),'Person_type':(160,162),'Interview_Status':(56,58),'Age':(121,123),'Sex':(128,130),'Race':(138,140),'Hispanic':(140,142),'LF_recode':(179,181),'LF_recode2':(392,394),'Civilian_LF':(386,388),'Employed_nonfarm':(479,481),'Have_job':(205,207),'Unpaid_family_work':(183,185),'Recall_return':(276,278),'Recall_look':(280,282),'Job_offered':(331,333),'Job_offered_week':(358,360),'Job_search':(400,402),'Look_last_month':(293,295),'Look_last_year':(350,352),'Last_work':(564,566),'Discouraged':(388,390),'Retired':(566,568),'Disabled':(203,205),'Situation':(568,570),'FT_PT':(396,398),'FT_PT_status':(415,417),'Detailed_reason_part_time':(404,406),'Main_reason_part_time':(228,230),'Main_reason_not_full_time':(230,232),'Want_job':(346,348),'Want_job_ft':(226,228),'Want_job_ft_pt':(199,201),'Want_job_nilf':(417,419),'Reason_unemployment':(411,413),'Reason_not_looking':(348,350),'Hours_per_week':(217,219),'Hours_per_week_last':(242,244),'In_school':(574,576),'In_school_ft_pt':(576,578),'In_school_nilf':(580,582),'State_FIPS':(92,94),'County_FIPS':(100,103),'Metro_Code':(95,100),'Metro_Size':(106,107)}
+    col_dict = {'HHID':(0,15),'Person_type':(160,162),'Interview_Status':(56,58),'Age':(121,123),'Sex':(128,130),'Race':(138,140),'Hispanic':(140,142),'LF_recode':(179,181),'LF_recode2':(392,394),'Civilian_LF':(386,388),'Employed_nonfarm':(479,481),'Have_job':(205,207),'Unpaid_family_work':(183,185),'Recall_return':(276,278),'Recall_look':(280,282),'Job_offered':(331,333),'Job_offered_week':(358,360),'Available_ft':(249,251),'Job_search':(400,402),'Look_last_month':(293,295),'Look_last_year':(350,352),'Last_work':(564,566),'Discouraged':(388,390),'Retired':(566,568),'Disabled':(203,205),'Situation':(568,570),'FT_PT':(396,398),'FT_PT_status':(415,417),'Detailed_reason_part_time':(404,406),'Main_reason_part_time':(228,230),'Main_reason_not_full_time':(230,232),'Want_job':(346,348),'Want_job_ft':(226,228),'Want_job_ft_pt':(199,201),'Want_job_nilf':(417,419),'Reason_unemployment':(411,413),'Reason_not_looking':(348,350),'Hours_per_week':(217,219),'Hours_per_week_last':(242,244),'In_school':(574,576),'In_school_ft_pt':(576,578),'School_type':(578,580),'In_school_nilf':(580,582),'State_FIPS':(92,94),'County_FIPS':(100,103),'Metro_Code':(95,100),'Metro_Size':(106,107),'Metro_Status':(104,105),'Region':(88,90),'Division':(90,91)}
 
     df_p = pd.DataFrame()
 
@@ -54,6 +54,7 @@ def var_mapper(df_cps):
     recall_look_mapper = {' 1':'Yes',' 2':'No'}
     job_offered_mapper = {' 1':'Yes',' 2':'No'}
     job_offered_week_mapper = {' 1':'Yes',' 2':'No'}
+    available_ft_mapper = {' 1':'Yes',' 2':'No'}
     job_search_mapper = {' 1':'Looked Last 4 Weeks', ' 2':'Looked And Worked Last 4 Weeks', ' 3':'Looked Last 4 Weeks - Layoff', ' 4':'Unavailable Job Seekers', ' 5':'No Recent Job Search'}
     look_last_month_mapper = {' 1':'Yes',' 2':'No',' 3':'Retired',' 4':'Disabled', ' 5':'Unable to work'}
     look_last_year_mapper = {' 1':'Yes',' 2':'No'}
@@ -75,16 +76,22 @@ def var_mapper(df_cps):
     reason_unemployment_mapper = {' 1':'Job Loser/On Layoff', ' 2':'Other Job Loser', ' 3':'Temporary Job Ended', ' 4':'Job Leaver', ' 5':'Re-Entrant', ' 6':'New-Entrant'}
     reason_not_looking_mapper = {' 1':'Believes No Work Available In Area Of Expertise', ' 2':'Couldnt Find Any Work', ' 3':'Lacks Necessary Schooling/Training', ' 4':'Employers Think Too Young Or Too Old', ' 5':'Other Types Of Discrimination', ' 6':'Cant Arrange Child Care', ' 7':'Family Responsibilities', ' 8':'In School Or Other Training', ' 9':'Ill-health, Physical Disability', '10':'Transportation Problems', '11':'Other - Specify'}
     in_school_mapper = {' 1':'Yes', ' 2':'No'}
-    in_school_ft_pt = {' 1':'Full-time', ' 2':'Part-time'}
+    in_school_ft_pt_mapper = {' 1':'Full-time', ' 2':'Part-time'}
+    school_type_mapper = {' 1':'High School', ' 2':'College or University'}
+
     in_school_nilf_mapper = {' 1':'In School', ' 2':'Not In School'}
     metro_size_mapper = {'0':'NOT IDENTIFIED OR NONMETROPOLITAN', '2':'100,000 - 249,999', '3':'250,000 - 499,999', '4':'500,000 - 999,999', '5':'1,000,000 - 2,499,999', '6':'2,500,000 - 4,999,999', '7':'5,000,000+'}
+    metro_status_mapper = {'1':'Metropolitan','2':'Nonmetropolitan','3':'NA'}
+    region_mapper = {' 1':'Northeast',' 2':'Midwest',' 3':'South',' 4':'West'}
+    division_mapper = {'1':'New England','2':'Mid-Atlantic','3':'East North Central','4':'West North Central','5':'South Atlantic','6':'East South Central','7':'West South Central','8':'Mountain','9':'Pacific'}
 
 
-    df_cps = df_cps.replace({'Person_type':person_mapper, 'Sex':sex_mapper, 'Race':race_mapper, 'Hispanic':hispanic_mapper, 'LF_recode':lf_recode_mapper, 'LF_recode2':lf_recode2_mapper, 'Civilian_LF':civilian_lf_mapper, 'Employed_nonfarm':employed_nonfarm_mapper, 'Recall_return':recall_return_mapper, 'Recall_look':recall_look_mapper,'Job_offered':job_offered_mapper,'Job_offered_week':job_offered_week_mapper, 'Job_search':job_search_mapper, 'Look_last_month':look_last_month_mapper, 'Look_last_year':look_last_year_mapper, 'Last_work':last_work_mapper, 'Discouraged':discouraged_mapper, 'Retired':retired_mapper, 'Disabled':disabled_mapper, 'Situation': situation_mapper, 'FT_PT':ft_pt_mapper, 'FT_PT_status':ft_pt_status_mapper, 'Detailed_reason_part_time':detailed_pt_mapper, 'Main_reason_part_time':main_pt_mapper, 'Main_reason_not_full_time':main_not_ft_mapper, 'Have_job':have_job_mapper, 'Want_job':want_job_mapper, 'Want_job_ft':want_job_ft_mapper, 'Want_job_ft_pt':want_job_ft_pt_mapper, 'Want_job_nilf':want_job_nilf_mapper, 'Reason_unemployment':reason_unemployment_mapper, 'Reason_not_looking':reason_not_looking_mapper, 'In_school':in_school_mapper, 'In_school_ft_pt':in_school_ft_pt, 'In_school_nilf':in_school_nilf_mapper})
+    df_cps = df_cps.replace({'Person_type':person_mapper, 'Sex':sex_mapper, 'Race':race_mapper, 'Hispanic':hispanic_mapper, 'LF_recode':lf_recode_mapper, 'LF_recode2':lf_recode2_mapper, 'Civilian_LF':civilian_lf_mapper, 'Employed_nonfarm':employed_nonfarm_mapper, 'Recall_return':recall_return_mapper, 'Recall_look':recall_look_mapper,'Job_offered':job_offered_mapper,'Job_offered_week':job_offered_week_mapper, 'Available_ft':available_ft_mapper, 'Job_search':job_search_mapper, 'Look_last_month':look_last_month_mapper, 'Look_last_year':look_last_year_mapper, 'Last_work':last_work_mapper, 'Discouraged':discouraged_mapper, 'Retired':retired_mapper, 'Disabled':disabled_mapper, 'Situation': situation_mapper, 'FT_PT':ft_pt_mapper, 'FT_PT_status':ft_pt_status_mapper, 'Detailed_reason_part_time':detailed_pt_mapper, 'Main_reason_part_time':main_pt_mapper, 'Main_reason_not_full_time':main_not_ft_mapper, 'Have_job':have_job_mapper, 'Want_job':want_job_mapper, 'Want_job_ft':want_job_ft_mapper, 'Want_job_ft_pt':want_job_ft_pt_mapper, 'Want_job_nilf':want_job_nilf_mapper, 'Reason_unemployment':reason_unemployment_mapper, 'Reason_not_looking':reason_not_looking_mapper, 'In_school':in_school_mapper, 'In_school_ft_pt':in_school_ft_pt_mapper, 'School_type':school_type_mapper,'In_school_nilf':in_school_nilf_mapper,'Region':region_mapper,'Division':division_mapper})
+
 
     if year != 1995:
         df_cps = df_cps.replace({'Metro_Size':metro_size_mapper})
-
+        df_cps = df_cps.replace({'Metro_Status':metro_status_mapper})
     return df_cps
 
 
@@ -103,8 +110,8 @@ def refine_vars(df_cps):
     df_cps['Age_group'] = cut(df_cps['Age'])
 
     #Calculate full time vs. part time
-    df_cps.loc[(df_cps['FT_PT']=='Full Time LF'),'FT_PT']='Full_time'
-    df_cps.loc[(df_cps['Hours_per_week_last']!=-1)&((df_cps['Hours_per_week_last']<35)|(df_cps['FT_PT']=='Part Time LF')|(df_cps['Detailed_reason_part_time']!='-1')|(df_cps['Main_reason_part_time']!='-1')),'FT_PT']='Part_time'
+    df_cps.loc[((df_cps['LF_recode'].isin(['Employed - at work','Employed - absent']))&(df_cps['FT_PT']=='Full Time LF')),'FT_PT']='Full_time'
+    df_cps.loc[((df_cps['FT_PT']!='Full_time')&(df_cps['LF_recode'].isin(['Employed - at work','Employed - absent'])))&(((df_cps['Hours_per_week_last']<35)&(df_cps['Hours_per_week_last']!=-1))|(df_cps['FT_PT']=='Part Time LF')|(df_cps['Detailed_reason_part_time']!='-1')|(df_cps['Main_reason_part_time']!='-1')|(df_cps['LF_recode'].isin(['Employed - at work','Employed - absent']))),'FT_PT']='Part_time'
     df_cps.loc[(df_cps['FT_PT']!='Full_time')&(df_cps['FT_PT']!='Part_time'),'FT_PT']='NA'
 
     #Calculate those in school
@@ -115,18 +122,21 @@ def refine_vars(df_cps):
     # df_cps[(df_cps['Situation']==3)&(df_cps['In_school']!=1)]['LF_recode'].value_counts()
 
     #Calculate those in school full time vs part time
-    # df_cps.loc[(df_cps['In_school_ft_pt']==1)|(df_cps['In_school']==1),'In_school']='Yes'
-    # df_cps.loc[df_cps['In_school']!='Yes','In_school']='No'
+    df_cps.loc[(df_cps['In_school_ft_pt']=='Full-time')|((df_cps['Situation']=='In School')&(df_cps['In_school_ft_pt']!='Part-time')),'In_school_ft_pt']='Full-time'
+    # df_cps.loc[df_cps['In_school_ft_pt']!='Full_time','In_school_ft_pt']='No'
+
+    df_cps.loc[(df_cps['In_school']=='Yes')&(df_cps['School_type']=='-1')&(df_cps['Age']<18),'School_type']='High School'
+    df_cps.loc[(df_cps['In_school']=='Yes')&(df_cps['School_type']=='-1')&(df_cps['Age']>17),'School_type']='College or University'
 
     #Calculate those disabled
     df_cps.loc[(df_cps['Situation']=='Disabled')|(df_cps['Disabled']=='Yes')|(df_cps['LF_recode']=='Not in labor force - disabled'),'Disabled']='Yes'
     df_cps.loc[df_cps['Disabled']!='Yes','Disabled']='No'
 
     #Calculate those discouraged
-    # df_cps.loc[(df_cps['Discouraged']=='Discouraged Worker')|(df_cps['Discouraged']=='Conditionally Interested')|(df_cps['LF_recode2']=='NILF - discouraged'),'Discouraged']='Yes'
-    # df_cps.loc[df_cps['Discouraged']!='Yes','Discouraged']='No'
-    df_cps.loc[(df_cps['Discouraged']=='Discouraged Worker')|(df_cps['LF_recode2']=='NILF - discouraged'),'Discouraged']='Yes'
+    df_cps.loc[(df_cps['Discouraged']=='Discouraged Worker')|(df_cps['Discouraged']=='Conditionally Interested')|(df_cps['LF_recode2']=='NILF - discouraged'),'Discouraged']='Yes'
     df_cps.loc[df_cps['Discouraged']!='Yes','Discouraged']='No'
+    # df_cps.loc[(df_cps['Discouraged']=='Discouraged Worker')|(df_cps['LF_recode2']=='NILF - discouraged'),'Discouraged']='Yes'
+    # df_cps.loc[df_cps['Discouraged']!='Yes','Discouraged']='No'
 
 
     #Calculate those retired
@@ -168,11 +178,16 @@ def calc_urate(df_cps,recode_counts,type):
     return urate
 
 def weight(df_cps):
-    df_cps = df_cps.merge(df_state,on=['Sex','Race','Age_group','Hispanic','State_FIPS'],how='left',left_index=True)
+    # df_cps = df_cps.merge(df_state,on=['Sex','Race','Age_group','Hispanic','State_FIPS'],how='left',left_index=True)
 
     # for y in range(2000,2019):
     #     df_cps['POPESTIMATE'+str(y)]=df_cps['POPESTIMATE'+str(y)]/df_state['POPESTIMATE'+str(y)].sum()
-    df_cps['POPESTIMATE'+str(year)]=df_cps['POPESTIMATE'+str(year)]/df_state['POPESTIMATE'+str(year)].sum()
+
+    # y = year
+    # if y == 2019:
+    #     y -= 1
+
+    df_cps['Percent'+str(year)]=df_cps['POPESTIMATE'+str(year)]/df_state['POPESTIMATE'+str(year)].sum()
 
     df_cps['Count'] = np.arange(1,len(df_cps)+1)
 
@@ -183,16 +198,23 @@ def weight(df_cps):
     df_cps = df_cps.merge(weight_mapper,on=['Sex','Race','Age_group','Hispanic','State_FIPS'],how='left',left_index=True)
 
     #No detailed population data for 2019 - use 2018
-    if year == 2019:
-        df_cps['Weight'] = df_cps['POPESTIMATE2018']/df_cps['Ratio']
-    else:
-        df_cps['Weight'] = df_cps['POPESTIMATE'+str(year)]/df_cps['Ratio']
+    # if year == 2019:
+    #     df_cps['Weight'] = df_cps['Percent2018']/df_cps['Ratio']
+    # else:
+    #     df_cps['Weight'] = df_cps['Percent'+str(year)]/df_cps['Ratio']
+    df_cps['Weight'] = df_cps['Percent'+str(year)]/df_cps['Ratio']
+
+    df_cps.drop(['Count','Ratio'],axis=1,inplace=True)
+
+    #Try adjusting weights so they add up to length of df_cps
+    #Doesn't seem to make much of a difference either way
+    df_cps['Weight'] = df_cps['Weight']*(len(df_cps)/df_cps['Weight'].sum())
 
     return df_cps
 
 
 def calc_urate_weighted(df_cps,type):
-    df_cps = weight(df_cps)
+    # df_cps = weight(df_cps)
 
     if type=='U3':
         recode_weighted = df_cps.groupby('LF_recode')['Weight'].sum()
@@ -268,6 +290,16 @@ def add_seasonal(df_urates):
     df_urates['U6_weighted_seasoned'] = s_u6.trend.values
     df_urates['U6_weighted_seasoned'] = round(df_urates['U6_weighted_seasoned'],1)
 
+    df_urates_seas_self = df_urates[['Year','Month','Self_rate_weighted']]
+    df_urates_seas_self['Day'] = 1
+    df_urates_seas_self['Date'] = pd.to_datetime(df_urates_seas_self[['Year','Month','Day']])
+    df_urates_seas_self.drop(['Year','Month','Day'],axis=1,inplace=True)
+    df_urates_seas_self = df_urates_seas_self.set_index('Date')
+
+    s_self = seasonal_decompose(df_urates_seas_self)
+    df_urates['Self_rate_weighted_seasoned'] = s_self.trend.values
+    df_urates['Self_rate_weighted_seasoned'] = round(df_urates['Self_rate_weighted_seasoned'],1)
+
     return df_urates
 
 
@@ -281,8 +313,8 @@ def add_subpops(data, k, df):
         if r not in recode_counts.keys():
             recode_counts[r] = 0
 
-    print (k)
-    print (recode_counts)
+    # print (k)
+    # print (recode_counts)
 
     urate_sp = calc_urate(df,recode_counts,'U3')
     urate_weighted_sp = calc_urate_weighted(df,'U3')
@@ -309,8 +341,8 @@ def add_subpops(data, k, df):
 
 
 def self_calc(df_cps,k):
-    #Remove full-time students
-    df_self = df_cps[df_cps['In_school_ft_pt']!='Full-time']
+    #Remove full-time students who also work full time as well as high school students
+    df_self = df_cps[(df_cps['School_type']!='High School')&~((df_cps['In_school_ft_pt']=='Full-time')&(df_cps['FT_PT']=='Full_time'))]
     unemployed, only_disabled = self_calc_vars(df_self)
 
     pt_counts = df_self[df_self['FT_PT']=='Part_time']['Main_reason_part_time'].value_counts()
@@ -329,8 +361,7 @@ def self_calc(df_cps,k):
     num_pt = len(df_self[df_self['FT_PT']=='Part_time'])*pt_perc*underemployment_perc
 
     num_incarcerated = incarcerated_calc(df_cps,k)
-    # pop_ratio = df_state['POPESTIMATE'+str(year)].sum()/len(df_cps)
-    # num_incarcerated = df_incarcerated[df_incarcerated.Year==year]['INCARCERATED'].values[0]/pop_ratio
+
 
     num_unemployed = len(unemployed)-(len(only_disabled)*.714)+num_pt+num_incarcerated*.215
     num_employed = len(df_self[df_self['LF_recode'].isin(['Employed - at work','Employed - absent'])])
@@ -343,35 +374,35 @@ def self_calc(df_cps,k):
 def self_calc_weight(df_cps,k):
     #Weighted
     df_self = df_cps[df_cps['In_school_ft_pt']!='Full-time']
-    df_self_weight = weight(df_self)
-    unemployed_weight, only_disabled_weight = self_calc_vars(df_self_weight)
+    df_self = weight(df_self)
+    unemployed, only_disabled = self_calc_vars(df_self)
 
-    pt_counts_weight = df_self_weight[df_self_weight['FT_PT']=='Part_time'].groupby('Main_reason_part_time')['Weight'].sum()
+    pt_counts = df_self[df_self['FT_PT']=='Part_time'].groupby('Main_reason_part_time')['Weight'].sum()
 
     #Set all values that don't appear in pt_counts to zero
     pt_keys = ['Slack Work/Business Conditions', 'Could Only Find Part-time Work', 'Seasonal Work', 'Child Care Problems', 'Health/Medical Limitations', 'Full-Time Workweek Is Less Than 35 Hrs','Retired/Social Security Limit On Earnings']
 
     for r in pt_keys:
-        if r not in pt_counts_weight.keys():
-            pt_counts_weight[r] = 0
+        if r not in pt_counts.keys():
+            pt_counts[r] = 0
 
-    pt_perc_weight = (pt_counts_weight['Slack Work/Business Conditions']+pt_counts_weight['Could Only Find Part-time Work']+pt_counts_weight['Seasonal Work']+pt_counts_weight['Child Care Problems']+pt_counts_weight['Health/Medical Limitations']+pt_counts_weight['Full-Time Workweek Is Less Than 35 Hrs']+pt_counts_weight['Retired/Social Security Limit On Earnings'])/(pt_counts_weight.sum()-pt_counts_weight['-1'])
+    pt_perc = (pt_counts['Slack Work/Business Conditions']+pt_counts['Could Only Find Part-time Work']+pt_counts['Seasonal Work']+pt_counts['Child Care Problems']+pt_counts['Health/Medical Limitations']+pt_counts['Full-Time Workweek Is Less Than 35 Hrs']+pt_counts['Retired/Social Security Limit On Earnings'])/(pt_counts.sum()-pt_counts['-1'])
 
     underemployment_perc = 1-(avg_part_time(df_self)/35)
 
-    num_pt_weight = (df_self_weight[df_self_weight['FT_PT']=='Part_time']['Weight'].sum())*pt_perc_weight*underemployment_perc
+    num_pt = (df_self[df_self['FT_PT']=='Part_time']['Weight'].sum())*pt_perc*underemployment_perc
 
     num_incarcerated = incarcerated_calc(df_cps,k)
-    # pop_ratio = df_state['POPESTIMATE'+str(year)].sum()/len(df_cps)
-    # num_incarcerated = df_incarcerated[df_incarcerated.Year==year]['INCARCERATED'].values[0]/pop_ratio
 
-    num_unemployed_weight = unemployed_weight['Weight'].sum()-(only_disabled_weight['Weight'].sum()*.714)+num_pt_weight+num_incarcerated*.215
+    num_unemployed = unemployed['Weight'].sum()-(only_disabled['Weight'].sum()*.714)+num_pt+num_incarcerated*.215
 
-    num_employed_weight = df_self_weight.groupby('LF_recode')['Weight'].sum()[['Employed - at work','Employed - absent']].sum()
+    # num_unemployed = unemployed['Weight'].sum()-(only_disabled['Weight'].sum()*.714)+num_pt
 
-    self_rate_weight = num_unemployed_weight/(num_unemployed_weight+num_employed_weight)
+    num_employed = df_self.groupby('LF_recode')['Weight'].sum()[['Employed - at work','Employed - absent']].sum()
 
-    return self_rate_weight
+    self_rate = num_unemployed/(num_unemployed+num_employed)
+
+    return self_rate
 
 
 def self_calc_vars(df_self):
@@ -384,12 +415,42 @@ def self_calc_vars(df_self):
 
 
 def incarcerated_calc(df_cps,k):
-    df_cps = df_cps.merge(df_state,on=['Sex','Race','Age_group','Hispanic','State_FIPS'],how='left',left_index=True)
+    # df_cps = df_cps.merge(df_state,on=['Sex','Race','Age_group','Hispanic','State_FIPS'],how='left',left_index=True)
 
     pop_ratio = df_cps['POPESTIMATE'+str(year)].sum()/len(df_cps)
     num_incarcerated = df_incarcerated[df_incarcerated.Year==year][incarceration_dict[k]].values[0]/pop_ratio
 
     return num_incarcerated
+
+
+def calc_percentages(df_cps):
+    nilf = df_cps[df_cps['LF_recode'].isin(['Not in labor force - retired','Not in labor force - other','Not in labor force - disabled'])]
+    perc_nilf = nilf['Weight'].sum()/len(df_cps)
+    perc_retired_nilf = nilf[nilf['Retired']=='Yes']['Weight'].sum()/len(df_cps)
+    perc_disabled_nilf = nilf[nilf['Disabled']=='Yes']['Weight'].sum()/len(df_cps)
+    perc_student_nilf = nilf[nilf['In_school']=='Yes']['Weight'].sum()/len(df_cps)
+
+    perc_looking = df_cps[df_cps['LF_recode']=='Unemployed - looking']['Weight'].sum()/len(df_cps)
+    perc_layoff = df_cps[df_cps['LF_recode']=='Unemployed - on layoff']['Weight'].sum()/len(df_cps)
+    perc_unemployed = perc_looking+perc_layoff
+
+    perc_employed = df_cps[df_cps['LF_recode'].isin(['Employed - at work','Employed - absent'])]['Weight'].sum()/len(df_cps)
+    perc_employed_ft = df_cps[df_cps['FT_PT']=='Full_time']['Weight'].sum()/len(df_cps)
+    perc_employed_pt = df_cps[df_cps['FT_PT']=='Part_time']['Weight'].sum()/len(df_cps)
+    perc_employed_ft_student = df_cps[(df_cps['FT_PT']=='Full_time')&(df_cps['In_school']=='Yes')]['Weight'].sum()/len(df_cps)
+    perc_employed_pt_student = df_cps[(df_cps['FT_PT']=='Part_time')&(df_cps['In_school']=='Yes')]['Weight'].sum()/len(df_cps)
+    # perc_employed_ft_student_ft = df_cps[(df_cps['FT_PT']=='Full_time')&(df_cps['In_school_ft_pt']=='Full-time')]['Weight'].sum()/len(df_cps)
+    # perc_employed_ft_student_pt = df_cps[(df_cps['FT_PT']=='Full_time')&(df_cps['In_school_ft_pt']=='Part-time')]['Weight'].sum()/len(df_cps)
+    # perc_employed_pt_student_ft = df_cps[(df_cps['FT_PT']=='Part_time')&(df_cps['In_school_ft_pt']=='Full-time')]['Weight'].sum()/len(df_cps)
+    # perc_employed_pt_student_pt = df_cps[(df_cps['FT_PT']=='Part_time')&(df_cps['In_school_ft_pt']=='Part-time')]['Weight'].sum()/len(df_cps)
+
+
+
+
+
+    return [perc_nilf,perc_retired_nilf,perc_disabled_nilf,perc_student_nilf,perc_unemployed,perc_looking,perc_layoff,perc_employed,perc_employed_ft,perc_employed_pt,perc_employed_ft_student,perc_employed_pt_student]
+
+
 
 
 
@@ -406,6 +467,7 @@ if __name__=='__main__':
     state_pop_pickle = 'state_pop.pickle'
     county90_pop_pickle = 'county90.pickle'
     urate_pickle = 'urate.pickle'
+    urate_all_pickle = 'urate_all.pickle'
     urate_test_pickle = 'urate_test.pickle'
     u6rate_pickle = 'u6rate.pickle'
     ces_pickle = 'ces.pickle'
@@ -452,18 +514,21 @@ if __name__=='__main__':
     #Monthly CPS data
     df_urates = pd.DataFrame()
     urate_list = []
+    df_percentages = pd.DataFrame()
 
     df_weights = pd.DataFrame()
-    # months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
+    months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
     months_dict = {'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,'jul':7,'aug':8,'sep':9,'oct':10,'nov':11,'dec':12}
-    months = ['may']
+    # months = ['jan','feb']
 
     #incarceration matcher
     incarceration_dict = {'male':'TOTRACEM','female':'TOTRACEF','white':'TOTWHITE','black':'TOTBLACK','hispanic':'TOTHISP','white_male':'WHITEM','white_female':'WHITEF','black_male':'BLACKM','black_female':'BLACKF','hispanic_male':'HISPM','hispanic_female':'HISPF','total':'INCARCERATED'}
 
+    df_state['POPESTIMATE2019'] = df_state['POPESTIMATE2018']
+
     if not os.path.isfile(pickle_path+urate_test_pickle):
 
-        for year in range(2016,2017):
+        for year in range(2019,2020):
             for m in months:
                 df_cps = pd.read_csv(fp+str(year)+'/'+m+str(year)[-2:]+'pub.dat')
 
@@ -474,6 +539,17 @@ if __name__=='__main__':
                 df_cps = turn_int(df_cps)
                 df_cps = df_cps[df_cps.Age>15]
                 df_cps = refine_vars(df_cps)
+
+
+                df_cps = df_cps.merge(df_state,on=['Sex','Race','Age_group','Hispanic','State_FIPS'],how='left',left_index=True)
+                df_cps = weight(df_cps)
+
+
+                percentages = calc_percentages(df_cps)
+                percentage_list = [{'Year':year,'Month':months_dict[m],'perc_nilf':percentages[0],'perc_retired_nilf':percentages[1],'perc_disabled_nilf':percentages[2],'perc_student_nilf':percentages[3],'perc_unemployed':percentages[4],'perc_looking':percentages[5],'perc_layoff':percentages[6],'perc_employed':percentages[7],'perc_employed_ft':percentages[8],'perc_employed_pt':percentages[9],'perc_employed_ft_student':percentages[10],'perc_employed_pt_student':percentages[11]}]
+
+                df_perc = pd.DataFrame(percentage_list)
+                df_percentages = df_percentages.append(df_perc)
 
 
                 recode_counts = dict(zip(df_cps['LF_recode'].value_counts().keys().tolist(),df_cps['LF_recode'].value_counts().tolist()))
@@ -489,19 +565,24 @@ if __name__=='__main__':
                 #2.56% diff on 1999-2018
                 df_cps['Unemployed_U6'] = np.where(((df_cps['LF_recode'].isin(['Unemployed - on layoff','Unemployed - looking']))|(df_cps['Look_last_year']=='Yes')|(df_cps['Look_last_month']=='Yes')|(df_cps['Job_offered_week']=='Yes')|(df_cps['Last_work']=='Within Last 12 Months')|(df_cps['Reason_not_looking'].isin(['Believes No Work Available In Area Of Expertise','Couldnt Find Any Work','Lacks Necessary Schooling/Training']))|(df_cps['Discouraged']=='Yes')|(df_cps['FT_PT_status'].isin(['PT Hrs, Usually Pt For Economic Reasons','PT for Economic Reasons, Usually Ft']))),'Yes','No')
 
+                #Experimenting: Try either hours_per_week OR hours_per_week last at beginning, adding in last work?
+                # df_cps['Unemployed_U6'] = np.where((df_cps['Hours_per_week']<35)&((df_cps['LF_recode'].isin(['Unemployed - on layoff','Unemployed - looking']))|(df_cps['Look_last_year']=='Yes')|(df_cps['Look_last_month']=='Yes')|(df_cps['Reason_not_looking'].isin(['Believes No Work Available In Area Of Expertise','Couldnt Find Any Work','Lacks Necessary Schooling/Training']))|(df_cps['Discouraged']=='Yes')|((df_cps['Available_ft']=='Yes')&(df_cps['Want_job_ft']=='Yes')&(df_cps['FT_PT_status'].isin(['PT Hrs, Usually Pt For Economic Reasons','PT for Economic Reasons, Usually Ft'])))),'Yes','No')
+
+
                 #1.1% diff 1999 with employment calc change!
                 # df_cps['Unemployed_U6'] = np.where(((df_cps['LF_recode'].isin(['Unemployed - on layoff','Unemployed - looking']))|(df_cps['Look_last_year']=='Yes')|(df_cps['Reason_not_looking'].isin(['Believes No Work Available In Area Of Expertise','Couldnt Find Any Work','Lacks Necessary Schooling/Training','Employers Think Too Young Or Too Old','Other Types Of Discrimination']))|(df_cps['Discouraged']=='Yes')|(df_cps['FT_PT_status'].isin(['PT Hrs, Usually Pt For Economic Reasons','PT for Economic Reasons, Usually Ft']))),'Yes','No')
                 ##############################################
 
                 U6_rate = calc_urate(df_cps,recode_counts,'U6')
                 U6_weighted = calc_urate_weighted(df_cps,'U6')
-                # print(U6_weighted)
+                print(str(m)+str(year)+': '+str(U6_weighted))
 
                 self_rate = self_calc(df_cps,'total')
                 self_rate_weight = self_calc_weight(df_cps,'total')
 
 
                 data = [{'Year':year,'Month':months_dict[m],'Num_employed':recode_counts['Employed - at work']+recode_counts['Employed - absent'],'Num_unemployed': recode_counts['Unemployed - on layoff']+recode_counts['Unemployed - looking'],'Num_LF':(recode_counts['Employed - at work']+recode_counts['Employed - absent']+recode_counts['Unemployed - on layoff']+recode_counts['Unemployed - looking']),'Num_total':len(df_cps),'UR':urate,'UR_weighted':urate_weighted,'U6':U6_rate,'U6_weighted':U6_weighted,'Self_rate':self_rate,'Self_rate_weighted':self_rate_weight}]
+
 
                 #define subpopulations
                 df_male = df_cps[df_cps.Sex=='Male']
@@ -523,6 +604,7 @@ if __name__=='__main__':
                 for k, df in df_dict.items():
                     data = add_subpops(data, k, df)
 
+
                 df_ur = pd.DataFrame(data)
                 df_urates = df_urates.append(df_ur)
 
@@ -536,26 +618,8 @@ if __name__=='__main__':
                 # U6_rate = num_unemployed/(num_employed+num_unemployed)
                 # print (U6_rate)
 
-                '''
-                df_cps['Employed'] = np.where((df_cps['In_school']!='Yes')&(df_cps['LF_recode'].isin(['Employed - at work','Employed - absent'])),'Yes','No')
 
-                num_employed = len(df_cps[df_cps['Employed']=='Yes'])
 
-                df_cps['Unemployed'] = np.where(((df_cps['Retired']!='Yes')&(df_cps['In_school']!='Yes'))&((df_cps['LF_recode'].isin(['Unemployed - on layoff','Unemployed - looking']))|(df_cps['Want_work']=='Yes')|(df_cps['Discouraged']=='Yes')|(df_cps['Disabled']=='Yes')),'Yes','No')
-
-                num_unemployed = len(df_cps[df_cps['Unemployed']=='Yes'])
-
-                num_part_time = len(df_cps[df_cps['FT_PT']=='Part_time'])
-
-                avg_pt_hours = avg_part_time(df_cps)
-
-                #Calculate number of part-timers to subtract from employed and add to unemployed based on average number of hours they work less than full time (35).
-                remove_employed = num_part_time-int(round(num_part_time*(avg_pt_hours/35)))
-                num_employed = num_employed-remove_employed
-                num_unemployed = num_unemployed+remove_employed
-
-                adj_urate = num_unemployed/(num_employed+num_unemployed)
-                '''
 
 
 
