@@ -398,7 +398,10 @@ def self_calc_weight(df_cps,k):
 
     # num_unemployed = unemployed['Weight'].sum()-(only_disabled['Weight'].sum()*.714)+num_pt
 
-    num_employed = df_self.groupby('LF_recode')['Weight'].sum()[['Employed - at work','Employed - absent']].sum()
+    #Subtract part-time percentage from employed total
+    num_employed = df_self.groupby('LF_recode')['Weight'].sum()[['Employed - at work','Employed - absent']].sum()-num_pt
+
+
 
     self_rate = num_unemployed/(num_unemployed+num_employed)
 
@@ -424,6 +427,7 @@ def incarcerated_calc(df_cps,k):
 
 
 def calc_percentages(df_cps):
+    ##### Total #####
     nilf = df_cps[df_cps['LF_recode'].isin(['Not in labor force - retired','Not in labor force - other','Not in labor force - disabled'])]
     perc_nilf = nilf['Weight'].sum()/len(df_cps)
     perc_retired_nilf = nilf[nilf['Retired']=='Yes']['Weight'].sum()/len(df_cps)
@@ -437,6 +441,7 @@ def calc_percentages(df_cps):
     perc_employed = df_cps[df_cps['LF_recode'].isin(['Employed - at work','Employed - absent'])]['Weight'].sum()/len(df_cps)
     perc_employed_ft = df_cps[df_cps['FT_PT']=='Full_time']['Weight'].sum()/len(df_cps)
     perc_employed_pt = df_cps[df_cps['FT_PT']=='Part_time']['Weight'].sum()/len(df_cps)
+
     perc_employed_ft_student = df_cps[(df_cps['FT_PT']=='Full_time')&(df_cps['In_school']=='Yes')]['Weight'].sum()/len(df_cps)
     perc_employed_pt_student = df_cps[(df_cps['FT_PT']=='Part_time')&(df_cps['In_school']=='Yes')]['Weight'].sum()/len(df_cps)
     # perc_employed_ft_student_ft = df_cps[(df_cps['FT_PT']=='Full_time')&(df_cps['In_school_ft_pt']=='Full-time')]['Weight'].sum()/len(df_cps)
@@ -444,11 +449,23 @@ def calc_percentages(df_cps):
     # perc_employed_pt_student_ft = df_cps[(df_cps['FT_PT']=='Part_time')&(df_cps['In_school_ft_pt']=='Full-time')]['Weight'].sum()/len(df_cps)
     # perc_employed_pt_student_pt = df_cps[(df_cps['FT_PT']=='Part_time')&(df_cps['In_school_ft_pt']=='Part-time')]['Weight'].sum()/len(df_cps)
 
+    ##### Labor Force #######
+    lf = df_cps[df_cps['LF_recode'].isin(['Employed - at work','Employed - absent','Unemployed - looking','Unemployed - on layoff'])]['Weight'].sum()
+
+    looking_lf = df_cps[df_cps['LF_recode']=='Unemployed - looking']['Weight'].sum()/lf
+    layoff_lf = df_cps[df_cps['LF_recode']=='Unemployed - on layoff']['Weight'].sum()/lf
+    unemployed_lf = looking_lf+layoff_lf
+
+    employed_ft_lf = df_cps[df_cps['FT_PT']=='Full_time']['Weight'].sum()/lf
+    employed_pt_lf = df_cps[df_cps['FT_PT']=='Part_time']['Weight'].sum()/lf
+    employed_lf = employed_ft_lf+employed_pt_lf
+
+    employed_pt_econ_lf = df_cps[(df_cps['FT_PT']=='Part_time')&(df_cps['FT_PT_status'].isin(['PT Hrs, Usually Pt For Economic Reasons','FT_Hours, Usually PT For Economic Reasons']))]['Weight'].sum()/lf
+
+    employed_pt_nonecon_lf = df_cps[(df_cps['FT_PT']=='Part_time')&(df_cps['FT_PT_status'].isin(['PT Hrs, Usually Pt For Economic Reasons','FT_Hours, Usually PT For Economic Reasons'])==False)]['Weight'].sum()/lf
 
 
-
-
-    return [perc_nilf,perc_retired_nilf,perc_disabled_nilf,perc_student_nilf,perc_unemployed,perc_looking,perc_layoff,perc_employed,perc_employed_ft,perc_employed_pt,perc_employed_ft_student,perc_employed_pt_student]
+    return [perc_nilf,perc_retired_nilf,perc_disabled_nilf,perc_student_nilf,perc_unemployed,perc_looking,perc_layoff,perc_employed,perc_employed_ft,perc_employed_pt,perc_employed_ft_student,perc_employed_pt_student,looking_lf,layoff_lf,unemployed_lf,employed_ft_lf,employed_pt_lf,employed_lf,employed_pt_econ_lf,employed_pt_nonecon_lf]
 
 
 
@@ -472,6 +489,7 @@ if __name__=='__main__':
     u6rate_pickle = 'u6rate.pickle'
     ces_pickle = 'ces.pickle'
     incarcerated_pickle = 'incarcerated.pickle'
+    percentage_pickle = 'percentage.pickle'
 
     print("...loading pickle")
     tmp = open(pickle_path+nat_pop_month_pickle,'rb')
@@ -528,7 +546,7 @@ if __name__=='__main__':
 
     if not os.path.isfile(pickle_path+urate_test_pickle):
 
-        for year in range(2019,2020):
+        for year in range(1999,2019):
             for m in months:
                 df_cps = pd.read_csv(fp+str(year)+'/'+m+str(year)[-2:]+'pub.dat')
 
@@ -546,12 +564,12 @@ if __name__=='__main__':
 
 
                 percentages = calc_percentages(df_cps)
-                percentage_list = [{'Year':year,'Month':months_dict[m],'perc_nilf':percentages[0],'perc_retired_nilf':percentages[1],'perc_disabled_nilf':percentages[2],'perc_student_nilf':percentages[3],'perc_unemployed':percentages[4],'perc_looking':percentages[5],'perc_layoff':percentages[6],'perc_employed':percentages[7],'perc_employed_ft':percentages[8],'perc_employed_pt':percentages[9],'perc_employed_ft_student':percentages[10],'perc_employed_pt_student':percentages[11]}]
+                percentage_list = [{'Year':year,'Month':months_dict[m],'perc_nilf':percentages[0],'perc_retired_nilf':percentages[1],'perc_disabled_nilf':percentages[2],'perc_student_nilf':percentages[3],'perc_unemployed':percentages[4],'perc_looking':percentages[5],'perc_layoff':percentages[6],'perc_employed':percentages[7],'perc_employed_ft':percentages[8],'perc_employed_pt':percentages[9],'perc_employed_ft_student':percentages[10],'perc_employed_pt_student':percentages[11],'looking_lf':percentages[12],'layoff_lf':percentages[13],'unemployed_lf':percentages[14],'employed_ft_lf':percentages[15],'employed_pt_lf':percentages[16],'employed_lf':percentages[17],'employed_pt_econ_lf':percentages[18],'employed_pt_nonecon_lf':percentages[19]}]
 
                 df_perc = pd.DataFrame(percentage_list)
                 df_percentages = df_percentages.append(df_perc)
 
-
+                '''
                 recode_counts = dict(zip(df_cps['LF_recode'].value_counts().keys().tolist(),df_cps['LF_recode'].value_counts().tolist()))
 
                 urate = calc_urate(df_cps,recode_counts,'U3')
@@ -617,7 +635,7 @@ if __name__=='__main__':
                 #
                 # U6_rate = num_unemployed/(num_employed+num_unemployed)
                 # print (U6_rate)
-
+                '''
 
 
 
@@ -630,6 +648,10 @@ if __name__=='__main__':
 
 
                 # print(adj_urate)
+        print("...saving pickle")
+        tmp = open(pickle_path+percentage_pickle,'wb')
+        pickle.dump(df_percentages,tmp)
+        tmp.close()
 
         print("...saving pickle")
         tmp = open(pickle_path+urate_test_pickle,'wb')
@@ -639,6 +661,11 @@ if __name__=='__main__':
         print("...loading pickle")
         tmp = open(pickle_path+urate_test_pickle,'rb')
         df_urates = pickle.load(tmp)
+        tmp.close()
+
+        print("...loading pickle")
+        tmp = open(pickle_path+percentage_pickle,'rb')
+        df_percentages = pickle.load(tmp)
         tmp.close()
 
     print(df_urates)
