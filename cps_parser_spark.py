@@ -402,8 +402,8 @@ if __name__=='__main__':
     m='jan'
     df_master = sqlContext.read.format('csv').options(header='true', inferSchema='true').load(fp+'cps_'+m+str(year)+'.csv')
     
-    # months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
-    months = ['feb']
+    months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
+    # months = ['feb']
     months_dict = {'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,'jul':7,'aug':8,'sep':9,'oct':10,'nov':11,'dec':12}
     for year in range(1999,2000):
         for m in months:
@@ -462,7 +462,7 @@ if __name__=='__main__':
     print(f"Weighting took {toc4 - tic4:0.1f} seconds") 
 
     #Drop unnecessary columns
-    df_master = df_master.drop(*['Pop_percent','sum(POPESTIMATE)','count','Ratio','Ref_person','Person_line_num','Person_type','Interview_Status'])
+    df_master = df_master.drop(*['sum(POPESTIMATE)','count','Ratio','Ref_person','Person_line_num','Person_type','Interview_Status'])
     
     #print(df_master.count())
     # print(df_master.agg(func.sum('Weight')).collect()[0][0])
@@ -498,10 +498,10 @@ if __name__=='__main__':
     # print(dff.show())
     '''
 
-    '''
+    
     #Monthly export takes around 1 minute per file. This is too long...
     # months = ['jan']
-    months_dict = {'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,'jul':7,'aug':8,'sep':9,'oct':10,'nov':11,'dec':12}
+    # months_dict = {'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,'jul':7,'aug':8,'sep':9,'oct':10,'nov':11,'dec':12}
     tic5 = time.perf_counter()
     for year in range(1999,2000):
         for m in months:
@@ -514,7 +514,7 @@ if __name__=='__main__':
 
     toc5 = time.perf_counter()
     print(f"Writing took {toc5 - tic5:0.1f} seconds") 
-    '''
+    
 
 
 
@@ -531,12 +531,34 @@ if __name__=='__main__':
     #Unweighted
     #print(df_master.groupBy('Unemployed_U3').count().where(col('Unemployed_U3')=='Yes').select(col('count')).collect()[0][0]/lfu3)
 
+    tic6 = time.perf_counter()
+
+    lendf = df_master.count()
+
     lfu3 = df_master.groupBy('Month','Year','Labor_force_U3').count().where(col('Labor_force_U3')=='Yes').select(col('count')).collect()[0][0]
-    print(df_master.groupBy('Month','Year','Unemployed_U3').agg(when(col('Unemployed_U3')=='Yes', func.sum('Weight')/lfu3).alias('U3_Weighted')).where(col('Unemployed_U3')=='Yes').show())
-    print(df_master.groupBy('Month','Year','Labor_force_U3').count().where(col('Labor_force_U3')=='Yes').select(col('count')))
+    #U3 rate
+    df_u3 = df_master.groupBy('Month','Year','Unemployed_U3').agg(when(col('Unemployed_U3')=='Yes', func.sum('Weight')/lfu3).alias('U3_Weighted')).where(col('Unemployed_U3')=='Yes').select('Month','Year','U3_Weighted')
+    # print(df_u3.show())
+
+    #LF counts U3
+    # print(df_master.groupBy('Month','Year','Labor_force_U3').count().where(col('Labor_force_U3')=='Yes').select(col('count')).show())
+    df_lfpr_u3 = df_master.groupBy('Month','Year','Labor_force_U3').agg(when(col('Labor_force_U3')=='Yes', func.sum('Weight')/lendf).alias('LFPR_U3_Weighted')).where(col('Labor_force_U3')=='Yes').select('Month','Year','LFPR_U3_Weighted')
+    # print(df_lfpr_u3.show())
 
     lfu6 = df_master.groupBy('Month','Year','Labor_force_U6').count().where(col('Labor_force_U6')=='Yes').select(col('count')).collect()[0][0]
-    print(df_master.groupBy('Month','Year','Unemployed_U6').agg(when(col('Unemployed_U6')=='Yes', func.sum('Weight')/lfu6).alias('U6_Weighted')).where(col('Unemployed_U6')=='Yes').show())
-    print(df_master.groupBy('Month','Year','Labor_force_U6').count().where(col('Labor_force_U6')=='Yes').select(col('count')))
+    #U6 rate
+    df_u6 = df_master.groupBy('Month','Year','Unemployed_U6').agg(when(col('Unemployed_U6')=='Yes', func.sum('Weight')/lfu6).alias('U6_Weighted')).where(col('Unemployed_U6')=='Yes').select('Month','Year','U6_Weighted')
+    # print(df_u6.show())
+    #LF counts U6
+    df_lfpr_u6 = df_master.groupBy('Month','Year','Labor_force_U6').agg(when(col('Labor_force_U6')=='Yes', func.sum('Weight')/lendf).alias('LFPR_U6_Weighted')).where(col('Labor_force_U6')=='Yes').select('Month','Year','LFPR_U6_Weighted')
+    # print(df_lfpr_u6.show())
+
+    df_stats = df_u3.join(df_lfpr_u3,on=['Month','Year'], how='left')
+    df_stats = df_stats.join(df_u6,on=['Month','Year'], how='left')
+    df_stats = df_stats.join(df_lfpr_u6,on=['Month','Year'], how='left')
+    print(df_stats.show())
     
+
+    toc6 = time.perf_counter()
+    print(f"Stat calcs took {toc6 - tic6:0.1f} seconds")
     

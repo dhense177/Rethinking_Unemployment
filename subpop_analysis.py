@@ -17,7 +17,7 @@ warnings.filterwarnings('ignore')
 # spark = SparkSession.builder.appName('pandasToSparkDF').getOrCreate()
 
 
-def growth(start_year,end_year,period,subpop=None,stat='UR'):
+def growth(df,start_year,end_year,period,subpop=None,stat='UR'):
     '''
         Calculate growth rate for given statistic 'stat' on a frequency (e.g. yearly) 
         specified by 'period' between 'start_year' and 'end_year' for all subpopulations
@@ -63,9 +63,11 @@ if __name__=='__main__':
     ])
 
 
-    period = 3
-    start_year = 2000
-    end_year = 2002
+    period = 1
+    start_year = 1999
+    end_year = 1999
+
+    u3_growth = growth(df,start_year,end_year,period,stat='U3_weighted')
 
     # df_spark = sqlContext.read.format('csv').options(header='true', inferSchema='true').load('/home/dhense/PublicData/Economic_analysis/intermediate_files/dec2000.csv')
     # print(df_spark.show(5))
@@ -77,7 +79,7 @@ if __name__=='__main__':
     #subpop = 'Sex'
 
     '''
-    UR_growth = growth(start_year,end_year,period,stat='UR',)
+    U3_growth = growth(start_year,end_year,period,stat='U3_weighted')
     U6_growth = growth(start_year,end_year,period,stat='U6')
     #num_total is not population - change this
     #Pop_growth = growth(start_year,end_year,period,subpop=subpop,stat='Num_total')

@@ -1,4 +1,4 @@
-import os, pickle, time
+import os, pickle, time, math
 import pandas as pd
 import numpy as np
 from itertools import combinations, product, chain
@@ -371,12 +371,12 @@ if __name__=='__main__':
     marital_list = [{'Marital_status': 'Married'},{'Marital_status': 'Never married'},{'Marital_status': 'Divorced'},{'Marital_status': 'Widowed'},{'Marital_status': 'Separated'}]
     #simplify school completed to fewer categories
     school_list = [{'School_completed': 'High school degree'},{'School_completed': 'No high school degree'},{'School_completed': 'Bachelors degree'},{'School_completed': 'Masters degree'},{'School_completed': 'Associate degree'},{'School_completed': 'Professional school degree'},{'School_completed': 'Doctorate degree'}]
-    # division_list = [{'Division': 'South Atlantic'},{'Division': 'East North Central'},{'Division': 'Mid-Atlantic'},{'Division': 'Pacific'},{'Division': 'Mountain'},{'Division': 'West South Central'},{'Division': 'West North Central'},{'Division': 'New England'},{'Division': 'East South Central'}]
+    division_list = [{'Division': 'South Atlantic'},{'Division': 'East North Central'},{'Division': 'Mid-Atlantic'},{'Division': 'Pacific'},{'Division': 'Mountain'},{'Division': 'West South Central'},{'Division': 'West North Central'},{'Division': 'New England'},{'Division': 'East South Central'}]
     state_list = [{'State_FIPS': '06'},{'State_FIPS': '36'},{'State_FIPS': '12'},{'State_FIPS': '48'},{'State_FIPS': '42'},{'State_FIPS': '17'},{'State_FIPS': '39'},{'State_FIPS': '26'},{'State_FIPS': '34'},{'State_FIPS': '37'},{'State_FIPS': '25'},{'State_FIPS': '13'},{'State_FIPS': '04'},{'State_FIPS': '51'},{'State_FIPS': '40'},{'State_FIPS': '01'},{'State_FIPS': '54'},{'State_FIPS': '16'},{'State_FIPS': '32'},{'State_FIPS': '27'},{'State_FIPS': '22'},{'State_FIPS': '08'},{'State_FIPS': '55'},{'State_FIPS': '47'},{'State_FIPS': '30'},{'State_FIPS': '05'},{'State_FIPS': '35'},{'State_FIPS': '31'},{'State_FIPS': '21'},{'State_FIPS': '20'},{'State_FIPS': '49'},{'State_FIPS': '46'},{'State_FIPS': '18'},{'State_FIPS': '19'},{'State_FIPS': '53'},{'State_FIPS': '38'},{'State_FIPS': '56'},{'State_FIPS': '41'},{'State_FIPS': '29'},{'State_FIPS': '45'},{'State_FIPS': '02'},{'State_FIPS': '28'},{'State_FIPS': '24'},{'State_FIPS': '23'},{'State_FIPS': '33'},{'State_FIPS': '44'},{'State_FIPS': '09'},{'State_FIPS': '50'},{'State_FIPS': '10'},{'State_FIPS': '11'},{'State_FIPS': '15'}]
     #disabled_list = [{'Disabled':i} for i in list(df['Disabled'].value_counts().index)]
     #duty_list = list(df['Ever_active_duty'].value_counts().index)
 
-    all_list = [sex_list,race_list,hispanic_list,age_list,marital_list,school_list,state_list]
+    all_list = [sex_list,race_list,hispanic_list,age_list,marital_list,school_list,division_list]
     # all_list_str = ['sex_list','race_list','hispanic_list','age_list','state_list']
 
     #print(len(list(product(*all_list))))
@@ -404,8 +404,8 @@ if __name__=='__main__':
 
     
     #examp = final_flat_sub[0]
-    months = ['jan']
-    # months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
+    # months = ['jan']
+    months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
     df_data = pd.DataFrame()
 
     recodes = ['Employed - at work','Not in labor force - retired','Not in labor force - other','Not in labor force - disabled','Unemployed - looking','Employed - absent','Unemployed - on layoff']
@@ -419,6 +419,11 @@ if __name__=='__main__':
             # df = pickle.load(tmp)
             # tmp.close()
             df = pd.read_csv(import_path+'cps_'+m+str(year)+'.csv')
+            #Set threshold to around .1% of population
+            #MAY NEED TO ADJUST UPWARDS- SEE SOME ZEROS FOR U3 RATES. Maybe .25%?
+            threshold = math.floor(len(df)/1000)
+            #Weight sum
+            weight_sum = df['Weight'].sum()
 
             '''
             ################################################
@@ -430,11 +435,12 @@ if __name__=='__main__':
             df = df.replace({'School_completed':school_completed_mapper,'Marital_status':marital_status_mapper})
             #################################################
             '''
-'''
+            count=0
+            tic = time.perf_counter()
             for f in final_flat:
                 df_sub = df
                 #Timer start
-                tic = time.perf_counter()
+                
                 for i in f:
                     # Filter for age_group
                     if type(list(i.values())[0]) is tuple:
@@ -444,16 +450,25 @@ if __name__=='__main__':
                     # df_sub=df_sub[df_sub[list(i.keys())[0]]==list(i.values())[0]]
                 
                 #If fewer than 100 people in this group, do not include in subpop analysis
-                if len(df_sub)<100:
+                len_sub = len(df_sub)
+                if len_sub<threshold:
                     continue
-                toc = time.perf_counter()
-                toc_count += toc-tic
+
                 
                 
                 # percentages = calc_percentages(df_sub)
                 # percentage_list = [{'Year':year,'Month':m,'perc_nilf':percentages[0],'perc_retired_nilf':percentages[1],'perc_disabled_nilf':percentages[2],'perc_student_nilf':percentages[3],'perc_unemployed':percentages[4],'perc_looking':percentages[5],'perc_layoff':percentages[6],'perc_employed':percentages[7],'perc_employed_ft':percentages[8],'perc_employed_pt':percentages[9],'perc_employed_ft_student':percentages[10],'perc_employed_pt_student':percentages[11],'looking_lf':percentages[12],'layoff_lf':percentages[13],'unemployed_lf':percentages[14],'employed_ft_lf':percentages[15],'employed_pt_lf':percentages[16],'employed_lf':percentages[17],'employed_pt_econ_lf':percentages[18],'employed_pt_nonecon_lf':percentages[19]}]
-                
 
+
+                tic1 = time.perf_counter()
+                data = pd.DataFrame([{'Year':year,'Month':m,'SubPop':[f[i] for i in range(len(f))],'Pop_percentage':df_sub['Weight'].sum()/weight_sum,'U3_weighted':len(df_sub[df_sub.Unemployed_U3=='Yes'])/len(df_sub[df_sub.Labor_force_U3=='Yes']),'LFPR_U3':len(df_sub[df_sub.Labor_force_U3=='Yes'])/len_sub,'U6_weighted':len(df_sub[df_sub.Unemployed_U6=='Yes'])/len(df_sub[df_sub.Labor_force_U6=='Yes']),'LFPR_U6':len(df_sub[df_sub.Labor_force_U6=='Yes'])/len_sub}])
+
+                df_data = df_data.append(data).reset_index(drop=True)
+                count+=1
+                print(count)
+
+
+                '''
                 #Make sure recode counts contains all items, and adds 0 to ones without any
                 
                 #df_sub['LF_recode'].value_counts().keys().tolist()
@@ -502,14 +517,21 @@ if __name__=='__main__':
                 #     continue
 
                 df_data = df_data.append(data).reset_index(drop=True)
-                
+                '''
+            toc = time.perf_counter()
+            toc_count += toc-tic    
+            print(f"Subpop calc took {toc_count:0.1f} seconds")    
 
+    #get subpops which have values for every month in dataset
+    df_data['SubPop'] = df_data['SubPop'].astype(str)
+    subpops = df_data.groupby('SubPop')['Month'].count()[df_data.groupby('SubPop')['Month'].count()==12].index
+    df_data = df_data[df_data['SubPop'].isin(subpops)]
 
     print("...saving pickle")
     tmp = open('/home/dhense/PublicData/Economic_analysis/intermediate_files/subpop_data.pickle','wb')
     pickle.dump(df_data,tmp)
     tmp.close()
-
+'''
     print(f"DataFrame filter took {toc_count:0.1f} seconds") 
     print(f"Recode counts took {toc1_count:0.1f} seconds")
     print(f"U3 calc took {toc2_count:0.1f} seconds")
