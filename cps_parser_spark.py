@@ -11,14 +11,8 @@ from common_functions import fips_mapper, cut
 
 pd.set_option('display.float_format', lambda x: '%.4f' % x)
 
-# spark = SparkSession.builder \
-    # .master("local") \
-    # .appName("CPS Parser") \
-    # .config("spark.some.config.option", "some-value") \
-    # .getOrCreate()
 sc = SparkContext("local", "CPS Parser")
 sqlContext = SQLContext(sc)
-
 
 
 '''
@@ -27,7 +21,12 @@ schema = StructType([
     StructField('Job_offered', StringType(), True),StructField('Job_offered_week', StringType(), True),StructField('Available_ft', StringType(), True),StructField('Job_search', StringType(), True),StructField('Look_last_month', StringType(), True),StructField('Look_last_year', StringType(), True),StructField('Last_work', StringType(), True),StructField('Discouraged', StringType(), True),StructField('Retired', StringType(), True),StructField('Disabled', StringType(), True),StructField('Situation', StringType(), True),StructField('FT_PT', StringType(), True),StructField('FT_PT_status', StringType(), True),StructField('Detailed_reason_part_time', StringType(), True),StructField('Main_reason_part_time', StringType(), True),StructField('Main_reason_not_full_time', StringType(), True),StructField('Want_job', StringType(), True),StructField('Want_job_ft', StringType(), True),StructField('Want_job_ft_pt', StringType(), True),StructField('Want_job_nilf', StringType(), True),StructField('Reason_unemployment', StringType(), True),StructField('Reason_not_looking', StringType(), True),StructField('Hours_per_week', StringType(), True),StructField('Hours_per_week_last', StringType(), True),StructField('In_school', StringType(), True),StructField('In_school_ft_pt', StringType(), True),StructField('School_type', StringType(), True),StructField('In_school_nilf', StringType(), True),StructField('State_FIPS', StringType(), True),StructField('County_FIPS', StringType(), True),StructField('Metro_Code', StringType(), True),StructField('Metro_Size', StringType(), True),StructField('Metro_Status', StringType(), True),StructField('Region', StringType(), True),StructField('Division', StringType(), True),StructField('Year', StringType(), True),StructField('Month', StringType(), True),StructField('FIPS', StringType(), True),StructField('PID', StringType(), True),StructField('SID', StringType(), True),StructField('Age_group', StringType(), True),StructField('Retired_want_work', StringType(), True),StructField('Want_work', StringType(), True),StructField('Pop_estimate', StringType(), True),StructField('Weight', StringType(), True)
 ])
 '''
+
+
 def var_mapper(df_master):
+    '''
+        Maps numerical codes for each variable into understandable values
+    '''
     person_mapper = {1.0:'Child',2.0:'Adult Civilian',3.0:'Adult Armed Forces'}
     person_expr = create_map([lit(x) for x in chain(*person_mapper.items())])
 
@@ -58,10 +57,10 @@ def var_mapper(df_master):
 
     country_birth_mapper = {57.0:'United States',72.0:'Puerto Rico',96.0:'U.S. OUTLYING AREA',231.0:'Philippines',60.0:'American Samoa', 233.0:'Saudi Arabia',66.0:'Guam',234.0:'Singapore',72.0:'Puerto Rico',237.0:'Syria',78.0:'U.S. Virgin Islands', 238.0:'Taiwan',102.0:'Austria',239.0:'Thailand',103.0:'Belgium',240.0:'Turkey',105.0:'Czechoslovakia',242.0:'Vietnam',106.0:'Denmark',245.0:'Asia',108.0:'Finland',252.0:'Middle East',109.0:'France',253.0:'Palestine',110.0:'Germany',300.0:'Bermuda',116.0:'Greece',301.0:'Canada',117.0:'Hungary',304.0:'North America',119.0:'Ireland/Eire',310.0:'Belize',120.0:'Italy',311.0:'Costa Rica',126.0:'Holland',312.0:'El Salvador',126.0:'Netherlands',313.0:'Guatemala',127.0:'Norway',314.0:'Honduras',128.0:'Poland',315.0:'Mexico',129.0:'Portugal',316.0:'Nicaragua',130.0:'Azores',317.0:'Panama',132.0:'Romania',318.0:'Central America',134.0:'Spain',333.0:'Bahamas',16.0:'Sweden',334.0:'Barbados',137.0:'Switzerland',337.0:'Cuba',138.0:'Great Britain',338.0:'Dominica',139.0:'England',339.0:'Dominican Republic',140.0:'Scotland',340.0:'Grenada',142.0:'Northern Ireland',342.0:'Haiti',147.0:'Yugoslavia',343.0:'Jamaica',148.0:'Europe',351.0:'Trinidad & Tobago',155.0:'Czech Republic',353.0:'Caribbean',156.0:'Slovakia/Slovak Republic',375.0:'Argentina',180.0:'USSR',376.0:'Bolivia',183.0:'Latvia',377.0:'Brazil',184.0:'Lithuania',378.0:'Chile',185.0:'Armenia',379.0:'Colombia',192.0:'Russia',380.0:'Ecuador',195.0:'Ukraine',383.0:'Guyana',200.0:'Afghanistan',385.0:'Peru',202.0:'Bangladesh',387.0:'Uruguay',205.0:'Burma',388.0:'Venezuela',206.0:'Cambodia',389.0:'South America',207.0:'China',415.0:'Egypt',209.0:'Hong Kong',417.0:'Ethiopia',210.0:'India',421.0:'Ghana',211.0:'Indonesia',427.0:'Kenya',212.0:'Iran',436.0:'Morocco',213.0:'Iraq',440.0:'Nigeria',214.0:'Israel',449.0:'South Africa',215.0:'Japan',462.0:'Other Africa',216.0:'Jordan',468.0:'North Africa',217.0:'Korea/South Korea', 501.0:'Australia',221.0:'Laos',507.0:'Figi',222.0:'Lebanon',514.0:'New Zealand',224.0:'Malaysia',527.0:'Pacific Islands',229.0:'Pakistan',555.0:'Abroad, country not known'}
     country_birth_expr = create_map([lit(x) for x in chain(*country_birth_mapper.items())])
+
     # school_completed_mapper = {'31':'LESS THAN 1ST GRADE','32':'1ST, 2ND, 3RD OR 4TH GRADE','33':'5TH OR 6TH GRADE','34':'7TH OR 8TH GRADE','35':'9TH GRADE','36':'10TH GRADE','37':'11TH GRADE','38':'12TH GRADE NO DIPLOMA','39':'HIGH SCHOOL GRAD-DIPLOMA OR EQUIV','40':'SOME COLLEGE BUT NO DEGREE','41':'ASSOCIATE DEGREE-OCCUPATIONAL/VOCATIONAL','42':'ASSOCIATE DEGREE-ACADEMIC PROGRAM','43':'BACHELORS DEGREE','44':'MASTERS DEGREE','45':'PROFESSIONAL SCHOOL DEG','46':'DOCTORATE DEGREE'}
     school_completed_mapper = {31:'No high school degree',32:'No high school degree',33:'No high school degree',34:'No high school degree',35:'No high school degree',36:'No high school degree',37:'No high school degree',38:'No high school degree',39:'High school degree',40:'High school degree',41:'Associate degree',42:'Associate degree',43:'Bachelors degree',44:'Masters degree',45:'Professional school degree',46:'Doctorate degree'}
     school_completed_expr = create_map([lit(x) for x in chain(*school_completed_mapper.items())])
-    # school_completed_mapper = {'LESS THAN 1ST GRADE':'No high school degree','1ST, 2ND, 3RD OR 4TH GRADE':'No high school degree','5TH OR 6TH GRADE':'No high school degree','7TH OR 8TH GRADE':'No high school degree','9TH GRADE':'No high school degree','10TH GRADE':'No high school degree','11TH GRADE':'No high school degree','12TH GRADE NO DIPLOMA':'No high school degree','HIGH SCHOOL GRAD-DIPLOMA OR EQUIV':'High school degree','SOME COLLEGE BUT NO DEGREE':'Some college but no degree','ASSOCIATE DEGREE-OCCUPATIONAL/VOCATIONAL':'Associate degree','ASSOCIATE DEGREE-ACADEMIC PROGRAM':'Associate degree','BACHELORS DEGREE':'Bachelors degree','MASTERS DEGREE':'Masters degree','PROFESSIONAL SCHOOL DEG':'Professional school degree','DOCTORATE DEGREE':'Doctorate degree'}
     
     active_duty_mapper = {1.0:'Yes',2.0:'No'}
     active_duty_expr = create_map([lit(x) for x in chain(*active_duty_mapper.items())])
@@ -181,16 +180,13 @@ def var_mapper(df_master):
     state_expr = create_map([lit(x) for x in chain(*state_mapper.items())])
 
 
-
+    ######################################## End individual variable mappers ########################################
     df_master = df_master.withColumn('State',df_master['State_FIPS'])
 
-    df_master = df_master.withColumn('Person_type', person_expr[df_master['Person_type']]).withColumn('Sex', sex_expr[df_master['Sex']]).withColumn('Race', race_expr[df_master['Race']]).withColumn('Marital_status', marital_status_expr[df_master['Marital_status']]).withColumn('Country_of_birth', country_birth_expr[df_master['Country_of_birth']]).withColumn('School_completed', school_completed_expr[df_master['School_completed']]).withColumn('Ever_active_duty', active_duty_expr[df_master['Ever_active_duty']]).withColumn('LF_recode', lf_recode_expr[df_master['LF_recode']]).withColumn('LF_recode2', lf_recode2_expr[df_master['LF_recode2']]).withColumn('Civilian_LF', civilian_lf_expr[df_master['Civilian_LF']]).withColumn('Employed_nonfarm', employed_nonfarm_expr[df_master['Employed_nonfarm']]).withColumn('Recall_return', recall_return_expr[df_master['Recall_return']]).withColumn('Recall_look', recall_look_expr[df_master['Recall_look']]).withColumn('Job_offered', job_offered_expr[df_master['Job_offered']]).withColumn('Job_offered_week', job_offered_week_expr[df_master['Job_offered_week']]).withColumn('Available_ft', available_ft_expr[df_master['Available_ft']]).withColumn('Job_search', job_search_expr[df_master['Job_search']]).withColumn('Look_last_month', look_last_month_expr[df_master['Look_last_month']]).withColumn('Look_last_year', look_last_year_expr[df_master['Look_last_year']]).withColumn('Last_work', last_work_expr[df_master['Last_work']]).withColumn('Discouraged', discouraged_expr[df_master['Discouraged']]).withColumn('Retired', retired_expr[df_master['Retired']]).withColumn('Disabled', disabled_expr[df_master['Disabled']]).withColumn('Situation', situation_expr[df_master['Situation']]).withColumn('FT_PT', ft_pt_expr[df_master['FT_PT']]).withColumn('FT_PT_status', ft_pt_status_expr[df_master['FT_PT_status']]).withColumn('Detailed_reason_part_time', detailed_pt_expr[df_master['Detailed_reason_part_time']]).withColumn('Main_reason_part_time', main_pt_expr[df_master['Main_reason_part_time']]).withColumn('Main_reason_not_full_time', main_not_ft_expr[df_master['Main_reason_not_full_time']]).withColumn('Have_job', have_job_expr[df_master['Have_job']]).withColumn('Want_job', want_job_expr[df_master['Want_job']]).withColumn('Want_job_ft', want_job_ft_expr[df_master['Want_job_ft']]).withColumn('Want_job_ft_pt', want_job_ft_pt_expr[df_master['Want_job_ft_pt']]).withColumn('Want_job_nilf', want_job_nilf_expr[df_master['Want_job_nilf']]).withColumn('Reason_unemployment', reason_unemployment_expr[df_master['Reason_unemployment']]).withColumn('Reason_not_looking', reason_not_looking_expr[df_master['Reason_not_looking']]).withColumn('In_school', in_school_expr[df_master['In_school']]).withColumn('In_school_ft_pt', in_school_ft_pt_expr[df_master['In_school_ft_pt']]).withColumn('School_type', school_type_expr[df_master['School_type']]).withColumn('In_school_nilf', in_school_nilf_expr[df_master['In_school_nilf']]).withColumn('Region', region_expr[df_master['Region']]).withColumn('Division', division_expr[df_master['Division']]).withColumn('State', state_expr[df_master['State']])
+    df_master = df_master.withColumn('Person_type', person_expr[df_master['Person_type']]).withColumn('Sex', sex_expr[df_master['Sex']]).withColumn('Race', race_expr[df_master['Race']]).withColumn('Marital_status', marital_status_expr[df_master['Marital_status']]).withColumn('Country_of_birth', country_birth_expr[df_master['Country_of_birth']]).withColumn('School_completed', school_completed_expr[df_master['School_completed']]).withColumn('Ever_active_duty', active_duty_expr[df_master['Ever_active_duty']]).withColumn('LF_recode', lf_recode_expr[df_master['LF_recode']]).withColumn('LF_recode2', lf_recode2_expr[df_master['LF_recode2']]).withColumn('Civilian_LF', civilian_lf_expr[df_master['Civilian_LF']]).withColumn('Employed_nonfarm', employed_nonfarm_expr[df_master['Employed_nonfarm']]).withColumn('Recall_return', recall_return_expr[df_master['Recall_return']]).withColumn('Recall_look', recall_look_expr[df_master['Recall_look']]).withColumn('Job_offered', job_offered_expr[df_master['Job_offered']]).withColumn('Job_offered_week', job_offered_week_expr[df_master['Job_offered_week']]).withColumn('Available_ft', available_ft_expr[df_master['Available_ft']]).withColumn('Job_search', job_search_expr[df_master['Job_search']]).withColumn('Look_last_month', look_last_month_expr[df_master['Look_last_month']]).withColumn('Look_last_year', look_last_year_expr[df_master['Look_last_year']]).withColumn('Last_work', last_work_expr[df_master['Last_work']]).withColumn('Discouraged', discouraged_expr[df_master['Discouraged']]).withColumn('Retired', retired_expr[df_master['Retired']]).withColumn('Disabled', disabled_expr[df_master['Disabled']]).withColumn('Situation', situation_expr[df_master['Situation']]).withColumn('FT_PT', ft_pt_expr[df_master['FT_PT']]).withColumn('FT_PT_status', ft_pt_status_expr[df_master['FT_PT_status']]).withColumn('Detailed_reason_part_time', detailed_pt_expr[df_master['Detailed_reason_part_time']]).withColumn('Main_reason_part_time', main_pt_expr[df_master['Main_reason_part_time']]).withColumn('Main_reason_not_full_time', main_not_ft_expr[df_master['Main_reason_not_full_time']]).withColumn('Have_job', have_job_expr[df_master['Have_job']]).withColumn('Want_job', want_job_expr[df_master['Want_job']]).withColumn('Want_job_ft', want_job_ft_expr[df_master['Want_job_ft']]).withColumn('Want_job_ft_pt', want_job_ft_pt_expr[df_master['Want_job_ft_pt']]).withColumn('Want_job_nilf', want_job_nilf_expr[df_master['Want_job_nilf']]).withColumn('Reason_unemployment', reason_unemployment_expr[df_master['Reason_unemployment']]).withColumn('Reason_not_looking', reason_not_looking_expr[df_master['Reason_not_looking']]).withColumn('In_school', in_school_expr[df_master['In_school']]).withColumn('In_school_ft_pt', in_school_ft_pt_expr[df_master['In_school_ft_pt']]).withColumn('School_type', school_type_expr[df_master['School_type']]).withColumn('In_school_nilf', in_school_nilf_expr[df_master['In_school_nilf']]).withColumn('Metro_Size', metro_size_expr[df_master['Metro_Size']]).withColumn('Metro_Status', metro_status_expr[df_master['Metro_Status']]).withColumn('Region', region_expr[df_master['Region']]).withColumn('Division', division_expr[df_master['Division']]).withColumn('State', state_expr[df_master['State']])
 
-
-    
-    # df_cps['State'] = df_cps['State_FIPS']
-
-    # df_cps = df_cps.replace({'Person_type':person_mapper, 'Sex':sex_mapper, 'Race':race_mapper, 'Hispanic':hispanic_mapper, 'Marital_status':marital_status_mapper, 'Country_of_birth':country_birth_mapper,'School_completed':school_completed_mapper,'Ever_active_duty':active_duty_mapper,'LF_recode':lf_recode_mapper, 'LF_recode2':lf_recode2_mapper, 'Civilian_LF':civilian_lf_mapper, 'Employed_nonfarm':employed_nonfarm_mapper, 'Recall_return':recall_return_mapper, 'Recall_look':recall_look_mapper,'Job_offered':job_offered_mapper,'Job_offered_week':job_offered_week_mapper, 'Available_ft':available_ft_mapper, 'Job_search':job_search_mapper, 'Look_last_month':look_last_month_mapper, 'Look_last_year':look_last_year_mapper, 'Last_work':last_work_mapper, 'Discouraged':discouraged_mapper, 'Retired':retired_mapper, 'Disabled':disabled_mapper, 'Situation': situation_mapper, 'FT_PT':ft_pt_mapper, 'FT_PT_status':ft_pt_status_mapper, 'Detailed_reason_part_time':detailed_pt_mapper, 'Main_reason_part_time':main_pt_mapper, 'Main_reason_not_full_time':main_not_ft_mapper, 'Have_job':have_job_mapper, 'Want_job':want_job_mapper, 'Want_job_ft':want_job_ft_mapper, 'Want_job_ft_pt':want_job_ft_pt_mapper, 'Want_job_nilf':want_job_nilf_mapper, 'Reason_unemployment':reason_unemployment_mapper, 'Reason_not_looking':reason_not_looking_mapper, 'In_school':in_school_mapper, 'In_school_ft_pt':in_school_ft_pt_mapper, 'School_type':school_type_mapper,'In_school_nilf':in_school_nilf_mapper,'Region':region_mapper,'Division':division_mapper,'State':state_mapper})
+    #What about MSA FIPS Code? (Metro)
+    #Need to map it to code on livingwage website (different metro codes)
 
 
     # if year != 1995:
@@ -200,10 +196,10 @@ def var_mapper(df_master):
 
 def refine_vars(df_cps):
     '''
-        -1 Means blank/not in universe except for Hispanic
+        Performs various changes, mappings and calculations to variable
     '''
 
-    #Hispanic, Race and Age group adjustments
+    #Hispanic and Race adjustments
     df_cps = df_cps.fillna({'Hispanic':'Not Hispanic'})
     df_cps = df_cps.withColumn('Hispanic',func.when(df_cps['Hispanic']!='Not Hispanic','Hispanic').otherwise(df_cps['Hispanic']))
 
@@ -211,7 +207,7 @@ def refine_vars(df_cps):
 
     #Bucket Age column into Age_group
     bucket_udf = udf(categorizer, StringType() )
-    df_cps = df_cps.withColumn("Age_group", bucket_udf("Age"))
+    df_cps = df_cps.withColumn('Age_group', bucket_udf('Age'))
 
     #Calculate full time vs. part time LOOK INTO THIS CALC TO ENSURE ACCURACY
     df_cps = df_cps.withColumn('FT_PT',func.when(((df_cps['LF_recode'].isin(['Employed - at work','Employed - absent']))&(df_cps['FT_PT']=='Full Time LF')),'Full_time').otherwise(df_cps['FT_PT']))
@@ -254,13 +250,13 @@ def refine_vars(df_cps):
 
     df_cps['Want_work'] = np.where((df_cps['Want_job']=='Yes, Or Maybe, It Depends')|(df_cps['Want_job_nilf']=='Want A Job')|(df_cps['Want_job_ft_pt']=='Yes'),'Yes','No')
     '''
-    #Calculate U3 Unemployment
+    #Calculate U3 Unemployment Rate
     df_cps = df_cps.withColumn('Unemployed_U3',df_cps['LF_recode'])
     df_cps = df_cps.withColumn('Unemployed_U3',func.when(df_cps['LF_recode'].isin(['Unemployed - on layoff','Unemployed - looking']),'Yes').otherwise(df_cps['Unemployed_U3']))
     df_cps = df_cps.withColumn('Unemployed_U3',func.when(df_cps['Unemployed_U3']!='Yes','No').otherwise(df_cps['Unemployed_U3']))
     df_cps = df_cps.fillna({'Unemployed_U3':'No'})
 
-    #Calculate U6 unemployment
+    #Calculate U6 Unemployment Rate
     # df_cps['Unemployed_U6'] = np.where(((df_cps['LF_recode'].isin(['Unemployed - on layoff','Unemployed - looking']))|(df_cps['Look_last_year']=='Yes')|(df_cps['Look_last_month']=='Yes')|(df_cps['Job_offered_week']=='Yes')|(df_cps['Last_work']=='Within Last 12 Months')|(df_cps['Reason_not_looking'].isin(['Believes No Work Available In Area Of Expertise','Couldnt Find Any Work','Lacks Necessary Schooling/Training']))|(df_cps['Discouraged']=='Yes')|(df_cps['FT_PT_status'].isin(['PT Hrs, Usually Pt For Economic Reasons','PT for Economic Reasons, Usually Ft']))),'Yes','No')
     df_cps = df_cps.withColumn('Unemployed_U6',df_cps['LF_recode'])
     df_cps = df_cps.withColumn('Unemployed_U6',func.when(((df_cps['LF_recode'].isin(['Unemployed - on layoff','Unemployed - looking']))|(df_cps['Look_last_year']=='Yes')|(df_cps['Look_last_month']=='Yes')|(df_cps['Job_offered_week']=='Yes')|(df_cps['Last_work']=='Within Last 12 Months')|(df_cps['Reason_not_looking'].isin(['Believes No Work Available In Area Of Expertise','Couldnt Find Any Work','Lacks Necessary Schooling/Training']))|(df_cps['Discouraged']=='Yes')|(df_cps['FT_PT_status'].isin(['PT Hrs, Usually Pt For Economic Reasons','PT for Economic Reasons, Usually Ft']))),'Yes').otherwise(df_cps['Unemployed_U6']))
