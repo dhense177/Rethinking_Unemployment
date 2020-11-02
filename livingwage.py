@@ -27,20 +27,17 @@ def append_values(year, state, url, df):
     if year==updated_year:
         tr_tag = soup.find_all("tr", class_="odd results")
         ann_inc_bt = [re.sub('\s+','',i.text)[1:].replace(',','') for i in tr_tag[1].find_all('td')][1:]
+        hourly_wages = [re.sub('\s+','',i.text)[1:].replace(',','') for i in tr_tag[0].find_all('td')][1:]
         if (int(year) > 2016) and (int(year) < 2020):    
             ann_inc_bt.pop(8)
+            hourly_wages.pop(8)
+        ann_inc_bt.extend(hourly_wages)
         ann_inc_bt.insert(0,state)
         ann_inc_bt.insert(0,year)
         df.loc[len(df)] = ann_inc_bt
 
 def final_adjustments(df):
-    df[['1Adult', '1Adult_1Child', '1Adult_2Child',
-       '1Adult_3Child', '2Adult1W', '2Adult1W_1Child', '2Adult1W_2Child',
-       '2Adult1W_3Child', '2Adult', '2Adult_1Child', '2Adult_2Child',
-       '2Adult_3Child']] = df[['1Adult', '1Adult_1Child', '1Adult_2Child',
-       '1Adult_3Child', '2Adult1W', '2Adult1W_1Child', '2Adult1W_2Child',
-       '2Adult1W_3Child', '2Adult', '2Adult_1Child', '2Adult_2Child',
-       '2Adult_3Child']].apply(pd.to_numeric)
+    df[['1Adult-Y','1Adult_1Child-Y','1Adult_2Child-Y','1Adult_3Child-Y','2Adult1W-Y','2Adult1W_1Child-Y','2Adult1W_2Child-Y','2Adult1W_3Child-Y', '2Adult-Y','2Adult_1Child-Y','2Adult_2Child-Y','2Adult_3Child-Y','1Adult-W', '1Adult_1Child-W', '1Adult_2Child-W','1Adult_3Child-W', '2Adult1W-W', '2Adult1W_1Child-W', '2Adult1W_2Child-W','2Adult1W_3Child-W', '2Adult-W', '2Adult_1Child-W', '2Adult_2Child-W','2Adult_3Child-W']] = df[['1Adult-Y','1Adult_1Child-Y','1Adult_2Child-Y','1Adult_3Child-Y','2Adult1W-Y','2Adult1W_1Child-Y','2Adult1W_2Child-Y','2Adult1W_3Child-Y', '2Adult-Y','2Adult_1Child-Y','2Adult_2Child-Y','2Adult_3Child-Y','1Adult-W', '1Adult_1Child-W', '1Adult_2Child-W','1Adult_3Child-W', '2Adult1W-W', '2Adult1W_1Child-W', '2Adult1W_2Child-W','2Adult1W_3Child-W', '2Adult-W', '2Adult_1Child-W', '2Adult_2Child-W','2Adult_3Child-W']].apply(pd.to_numeric)
 
     #Set 2017 values for Louisiana as mean of 2016 and 2018 values
     lou17 = list((df[(df['State_FIPS']=='22')&(df['Year']=='2018')].values[0][2:]+df[(df['State_FIPS']=='22')&(df['Year']=='2016')].values[0][2:])/2)
@@ -66,7 +63,7 @@ def final_adjustments(df):
 if __name__=='__main__':
     export_path = '/home/dhense/PublicData/Economic_analysis/intermediate_files/'
 
-    df = pd.DataFrame(columns=['Year','State_FIPS','1Adult','1Adult_1Child','1Adult_2Child','1Adult_3Child','2Adult1W','2Adult1W_1Child','2Adult1W_2Child','2Adult1W_3Child', '2Adult','2Adult_1Child','2Adult_2Child','2Adult_3Child'])
+    df = pd.DataFrame(columns=['Year','State_FIPS','1Adult-Y','1Adult_1Child-Y','1Adult_2Child-Y','1Adult_3Child-Y','2Adult1W-Y','2Adult1W_1Child-Y','2Adult1W_2Child-Y','2Adult1W_3Child-Y', '2Adult-Y','2Adult_1Child-Y','2Adult_2Child-Y','2Adult_3Child-Y','1Adult-W', '1Adult_1Child-W', '1Adult_2Child-W','1Adult_3Child-W', '2Adult1W-W', '2Adult1W_1Child-W', '2Adult1W_2Child-W','2Adult1W_3Child-W', '2Adult-W', '2Adult_1Child-W', '2Adult_2Child-W','2Adult_3Child-W'])
 
     #2012: missing data for state 24 and 26
     # url = 'https://web.archive.org/web/20120622033154/https://livingwage.mit.edu/'
@@ -99,6 +96,7 @@ if __name__=='__main__':
     tic = time.perf_counter()
 
     url_list = [url16,url17,url18,url19,url20]
+    # url_list = [url16]
 
     for url in url_list:
 
@@ -118,3 +116,9 @@ if __name__=='__main__':
     # print(set(states) - set(df['State_FIPS'].value_counts().index))
 
     df.to_csv(export_path+'livingwage.csv',index=False)
+
+
+    #Next steps
+    #1. Calculate CAGR for each state, calc results going back to 1999 (or use cpi to adjust back in time? or get cost item specific inflation rates?)
+    #2. Map Metro codes using mapping document
+    
