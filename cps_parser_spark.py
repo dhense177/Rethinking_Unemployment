@@ -250,13 +250,13 @@ def refine_vars(df_cps):
 
     df_cps['Want_work'] = np.where((df_cps['Want_job']=='Yes, Or Maybe, It Depends')|(df_cps['Want_job_nilf']=='Want A Job')|(df_cps['Want_job_ft_pt']=='Yes'),'Yes','No')
     '''
-    #Calculate U3 Unemployment Rate
+    #Calculate U3 Unemployed
     df_cps = df_cps.withColumn('Unemployed_U3',df_cps['LF_recode'])
     df_cps = df_cps.withColumn('Unemployed_U3',func.when(df_cps['LF_recode'].isin(['Unemployed - on layoff','Unemployed - looking']),'Yes').otherwise(df_cps['Unemployed_U3']))
     df_cps = df_cps.withColumn('Unemployed_U3',func.when(df_cps['Unemployed_U3']!='Yes','No').otherwise(df_cps['Unemployed_U3']))
     df_cps = df_cps.fillna({'Unemployed_U3':'No'})
 
-    #Calculate U6 Unemployment Rate
+    #Calculate U6 Unemployed
     # df_cps['Unemployed_U6'] = np.where(((df_cps['LF_recode'].isin(['Unemployed - on layoff','Unemployed - looking']))|(df_cps['Look_last_year']=='Yes')|(df_cps['Look_last_month']=='Yes')|(df_cps['Job_offered_week']=='Yes')|(df_cps['Last_work']=='Within Last 12 Months')|(df_cps['Reason_not_looking'].isin(['Believes No Work Available In Area Of Expertise','Couldnt Find Any Work','Lacks Necessary Schooling/Training']))|(df_cps['Discouraged']=='Yes')|(df_cps['FT_PT_status'].isin(['PT Hrs, Usually Pt For Economic Reasons','PT for Economic Reasons, Usually Ft']))),'Yes','No')
     df_cps = df_cps.withColumn('Unemployed_U6',df_cps['LF_recode'])
     df_cps = df_cps.withColumn('Unemployed_U6',func.when(((df_cps['LF_recode'].isin(['Unemployed - on layoff','Unemployed - looking']))|(df_cps['Look_last_year']=='Yes')|(df_cps['Look_last_month']=='Yes')|(df_cps['Job_offered_week']=='Yes')|(df_cps['Last_work']=='Within Last 12 Months')|(df_cps['Reason_not_looking'].isin(['Believes No Work Available In Area Of Expertise','Couldnt Find Any Work','Lacks Necessary Schooling/Training']))|(df_cps['Discouraged']=='Yes')|(df_cps['FT_PT_status'].isin(['PT Hrs, Usually Pt For Economic Reasons','PT for Economic Reasons, Usually Ft']))),'Yes').otherwise(df_cps['Unemployed_U6']))

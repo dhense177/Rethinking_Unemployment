@@ -11,15 +11,15 @@ def extract_record(df,yr,m):
             - Rows begin as single string of numerical values
             - Breaks them up into unique fields and inserts those values into Pandas DataFrame columns 
     '''
-    col_dict = {'HHID':(0,15),'Ref_person':(117,119),'Person_line_num':(146,148),'Person_type':(160,162),'Age':(121,123),'Sex':(128,130),'Race':(138,140),'Hispanic':(140,142),'Marital_status':(124,126),'Country_of_birth':(162,165),'School_completed':(136,138),'Ever_active_duty':(130,132),'LF_recode':(179,181),'LF_recode2':(392,394),'Civilian_LF':(386,388),'Employed_nonfarm':(479,481),'Have_job':(205,207),'Unpaid_family_work':(183,185),'Recall_return':(276,278),'Recall_look':(280,282),'Job_offered':(331,333),'Job_offered_week':(358,360),'Available_ft':(249,251),'Job_search':(400,402),'Look_last_month':(293,295),'Look_last_year':(350,352),'Last_work':(564,566),'Discouraged':(388,390),'Retired':(566,568),'Disabled':(203,205),'Situation':(568,570),'FT_PT':(396,398),'FT_PT_status':(415,417),'Detailed_reason_part_time':(404,406),'Main_reason_part_time':(228,230),'Main_reason_not_full_time':(230,232),'Want_job':(346,348),'Want_job_ft':(226,228),'Want_job_ft_pt':(199,201),'Want_job_nilf':(417,419),'Reason_unemployment':(411,413),'Reason_not_looking':(348,350),'Hours_per_week':(217,219),'Hours_per_week_last':(242,244),'In_school':(574,576),'In_school_ft_pt':(576,578),'School_type':(578,580),'In_school_nilf':(580,582),'State_FIPS':(92,94),'County_FIPS':(100,103),'Metro_Code':(94,100),'Metro_Size':(106,107),'Metro_Status':(104,105),'Region':(88,90),'Division':(90,91)}
+    col_dict = {'HHID':(0,15),'Ref_person':(117,119),'Person_line_num':(146,148),'Person_type':(160,162),'Age':(121,123),'Sex':(128,130),'Race':(138,140),'Hispanic':(140,142),'Marital_status':(124,126),'Country_of_birth':(162,165),'School_completed':(136,138),'Ever_active_duty':(130,132),'LF_recode':(179,181),'LF_recode2':(392,394),'Civilian_LF':(386,388),'Employed_nonfarm':(479,481),'Have_job':(205,207),'Unpaid_family_work':(183,185),'Recall_return':(276,278),'Recall_look':(280,282),'Job_offered':(331,333),'Job_offered_week':(358,360),'Available_ft':(249,251),'Job_search':(400,402),'Look_last_month':(293,295),'Look_last_year':(350,352),'Last_work':(564,566),'Discouraged':(388,390),'Retired':(566,568),'Disabled':(203,205),'Situation':(568,570),'FT_PT':(396,398),'FT_PT_status':(415,417),'Detailed_reason_part_time':(404,406),'Main_reason_part_time':(228,230),'Main_reason_not_full_time':(230,232),'Want_job':(346,348),'Want_job_ft':(226,228),'Want_job_ft_pt':(199,201),'Want_job_nilf':(417,419),'Reason_unemployment':(411,413),'Reason_not_looking':(348,350),'Hours_per_week':(217,219),'Hours_per_week_last':(242,244),'In_school':(574,576),'In_school_ft_pt':(576,578),'School_type':(578,580),'In_school_nilf':(580,582),'State_FIPS':(92,94),'County_FIPS':(100,103),'Metro_Code_Old':(96,100),'Metro_Size':(106,107),'Metro_Status':(104,105),'Region':(88,90),'Division':(90,91),'Family_Income':(38,40),'Household_Members':(58,60),'Family_Recode':(152,154),'Periodicity':(501,503),'Hourly_Status':(505,507),'Usual_Hours':(524,526),'Hourly_Pay_Main':(511,515),'Hourly_Rate_Out':(515,519),'Hourly_Rate_Recode':(519,523),'Weekly_Earnings':(526,534),'Overtime_Weekly':(539,547),'Overtime_Weekly2':(547,555),'Weeks_Paid':(558,560)}
 
     df_p = pd.DataFrame()
 
     #Deals with index differences between files in different years for certain variables
     for k,v in col_dict.items():
-        if ((year < 2003)&(k=='Hispanic')):
+        if ((int(yr) < 2003)&(k=='Hispanic')):
             df_p[k] = [i[0][156:158] for i in df.values]
-        elif ((year==1995)&((k=='County_FIPS')|(k=='Metro_Code')|(k=='Metro_Size'))):
+        elif ((int(yr)==1995)&((k=='County_FIPS')|(k=='Metro_Code')|(k=='Metro_Size'))):
             continue
         else:
             df_p[k] = [i[0][v[0]:v[1]] for i in df.values]
@@ -28,7 +28,7 @@ def extract_record(df,yr,m):
     df_p['Month'] = m
     df_p['State_FIPS'] = df_p['State_FIPS'].astype(str).str.strip().apply(lambda x: str(x).zfill(2) if x != '' else '')
 
-    if year != 1995:
+    if int(yr) != 1995:
         df_p['County_FIPS'] = df_p['County_FIPS'].astype(str).str.strip().apply(lambda x: str(x).zfill(3) if x != '' else '')
         df_p['FIPS'] = df_p['State_FIPS']+df_p['County_FIPS']
 
@@ -38,29 +38,102 @@ def extract_record(df,yr,m):
     #Calculate unique Survey ID (SID)
     df_p['SID'] = df_p['PID']+df_p['Year']+df_p['Month'].str.zfill(2)
 
+    ######################################################################################################################################
+
+    #Remove Armed Forces Members from DF
+    df_p = df_p[df_p['Person_type']!=' 3']
+
+    df_p['Family_Income'] = df_p['Family_Income'].astype(int)
+
+    #Map new Metro Codes to Old ones using metro mapper file
+    metro_mapper = pd.read_excel('/home/dhense/PublicData/Economic_analysis/Unemployment/metro_mapper.xlsx',converters={'C/MSA_1999_Code':str})
+
+    metro_mapper = metro_mapper[['CBSA_2003_Code','C/MSA_1999_Code']].rename(columns={'CBSA_2003_Code':'Metro_Code','C/MSA_1999_Code':'Metro_Code_Old'})
+
+    df_p = df_p.merge(metro_mapper,on='Metro_Code_Old',how='left')
+    df_p['Metro_Code'] = df_p['Metro_Code'].fillna(0)
+    df_p['Metro_Code'] = df_p['Metro_Code'].astype(int)
+
+    #Calculate number of dependent children per Household (children who are not employed)
+    children = pd.DataFrame(df_p[(df_p['Family_Recode']==' 3')&(df_p['LF_recode'].isin([' 1',' 2'])==False)].groupby('HHID')['SID'].count()).reset_index().rename(columns={'SID':'Num_Children_Dependent'})
+    df_p = df_p.merge(children,on='HHID',how='left').fillna(0)
+    df_p['Num_Children_Dependent'] = df_p['Num_Children_Dependent'].astype(int)
+
+    #Calculate number of adults per Household
+    adults = pd.DataFrame(df_p[df_p['Family_Recode'].isin([' 1',' 2'])].groupby('HHID')['SID'].count()).reset_index().rename(columns={'SID':'Num_Family_Adults'})
+    df_p = df_p.merge(adults,on='HHID',how='left').fillna(0)
+    df_p['Num_Family_Adults'] = df_p['Num_Family_Adults'].astype(int)
+    df_p.loc[(df_p['Num_Family_Adults']==0)&(df_p['Person_type']==' 2'),'Num_Family_Adults']=1
+
+    #Calculate number of working family members per Household (only reference person and spouse, not children)
+    df_p['Employed'] = np.where(df_p['LF_recode'].isin([' 1',' 2']),1,0)
+    working_fam = pd.DataFrame(df_p[df_p['Family_Recode'].isin([' 1',' 2'])].groupby('HHID')['Employed'].sum()).reset_index().rename(columns={'Employed':'Num_Working_Family_Members'})
+    df_p = df_p.merge(working_fam,on='HHID',how='left').fillna(0)
+    df_p['Num_Working_Family_Members'] = df_p['Num_Working_Family_Members'].astype(int)
+
+    #Calculate number of working individuals (children, not family members and other relatives within a household)
+    df_p['Working_Individual'] = np.where((df_p['Family_Recode'].isin(['-1',' 0',' 3',' 4']))&(df_p['LF_recode'].isin([' 1',' 2'])),1,0)
+    working_individual_hh = pd.DataFrame(df_p.groupby('HHID')['Working_Individual'].sum()).reset_index().rename(columns={'Working_Individual':'Num_Working_Individual'})
+    df_p = df_p.merge(working_individual_hh,on='HHID',how='left')
+
+    #Filter for only HH's with family income range data, no working individuals in HH except reference person and/or spouse
+    df_family = df_p[(df_p['Family_Income'].isin([-1,-2,-3])==False)&(df_p['Num_Working_Individual']==0)]
+    df_family = pd.DataFrame(df_family.groupby('HHID')['Year','Family_Income','Num_Children_Dependent','Num_Family_Adults','Num_Working_Family_Members'].max()).reset_index()
+
+    #Assume largest value per range (for value 14, 100000 is used as a proxy for the ceiling; the actual mapping is greater than 75K)
+    income_mapper = {1:5000, 2:7500, 3:10000, 4:12500, 5:15000, 6:20000, 7:25000, 8:30000, 9:35000, 10:40000, 11:50000, 12:60000, 13:75000, 14:100000}
+    df_family = df_family.replace({'Family_Income':income_mapper})
+
+    #Living Wage data
+    df_lw = pd.read_csv('/home/dhense/PublicData/Economic_analysis/intermediate_files/livingwagemetro.csv')
+
+    #Get metro codes where 1 years of data is missing
+    fours = df_lw['Metro_Code'].value_counts()[df_lw['Metro_Code'].value_counts()==4].index
+
+    for f in fours:
+        four = df_lw[df_lw['Metro_Code']==f]
+        years = four['Year'].values
+        missing = set([2016,2017,2018,2019,2020])-set(years)
+        missing = missing.pop()
+        year_low = missing-1
+        year_hi = missing+1
+        row = (four[four['Year']==year_low].values+four[four['Year']==year_hi].values)/2
+        df_lw.loc[len(df_lw)] = row[0]
+    
+    df_lw = df_lw.astype({'Year':int, 'Metro_Code':int})
+    
+    # df_p = df_p.merge(df_lw,on=['Year','Metro_Code'],how='left')
+
+
+
+
+    ######################################################################################################################################
+
     df_p = df_p.drop(columns=['Ref_person','Person_line_num']).reset_index(drop=True)
 
-    return df_p
+    return df_p, df_family, df_lw
 
 if __name__=='__main__':
     #Where raw files (.dat) are stored on local computer/external drive
-    fp = '/media/dhense/Elements/PublicData/cps_files/'
+    # fp = '/media/dhense/Elements/PublicData/cps_files/'
+    fp = '/home/dhense/PublicData/cps_files/'
 
     #Where you would like to save preprocessed csv's on local computer/external drive
-    export_path = '/media/dhense/Elements/PublicData/cps_csv_files/'
+    # export_path = '/media/dhense/Elements/PublicData/cps_csv_files/'
+    export_path = '/home/dhense/PublicData/cps_files/'
 
-    months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
-    # months = ['jan']
+    # months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
+    months = ['jan']
     months_dict = {'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,'jul':7,'aug':8,'sep':9,'oct':10,'nov':11,'dec':12}
 
 
     tic = time.perf_counter()
-    for year in range(1995,2021):
+    for year in range(1999,2000):
         for m in months:
             if year==2020 and m=='sep':
                 break
             df_cps = pd.read_csv(fp+str(year)+'/'+m+str(year)[-2:]+'pub.dat')
-            df_cps = extract_record(df_cps,str(year),str(months_dict[m]))
+            df_cps, df_family, df_lw = extract_record(df_cps,str(year),str(months_dict[m]))
             df_cps.drop_duplicates(subset='PID',keep=False, inplace=True)
             df_cps.to_csv(export_path+'cps_'+m+str(year)+'.csv',index=False)
     toc = time.perf_counter()

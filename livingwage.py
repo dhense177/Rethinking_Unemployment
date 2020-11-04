@@ -16,8 +16,9 @@ import pandas as pd
 #     states = [i['href'][-12:-10] for sublist in [tag.find_all('a') for tag in ul_tags] for i in sublist]
 #     return states
 
-def append_values(year, state, url, df):
-    r = requests.get(url, auth=('user', 'pass'))
+def append_state_values(year, state, url, df):
+    new_url = url+'states/'+state
+    r = requests.get(new_url, auth=('user', 'pass'))
     soup = bs(r.content, 'html.parser')
     updated_year = soup.find_all('a')[-1]['href'][5:9]
     #Handle year 2020 when scraping straight from website (not wayback machine)
@@ -36,7 +37,27 @@ def append_values(year, state, url, df):
         ann_inc_bt.insert(0,year)
         df.loc[len(df)] = ann_inc_bt
 
-def final_adjustments(df):
+def append_metro_values(year, metro, url, df):
+    r = requests.get(url, auth=('user', 'pass'))
+    soup = bs(r.content, 'html.parser')
+    updated_year = soup.find_all('a')[-1]['href'][5:9]
+    #Handle year 2020 when scraping straight from website (not wayback machine)
+    if year=='':
+        year = '2020'
+        updated_year = '2020'
+    if year==updated_year:
+        tr_tag = soup.find_all("tr", class_="odd results")
+        ann_inc_bt = [re.sub('\s+','',i.text)[1:].replace(',','') for i in tr_tag[1].find_all('td')][1:]
+        hourly_wages = [re.sub('\s+','',i.text)[1:].replace(',','') for i in tr_tag[0].find_all('td')][1:]
+        if (int(year) > 2016) and (int(year) < 2020):    
+            ann_inc_bt.pop(8)
+            hourly_wages.pop(8)
+        ann_inc_bt.extend(hourly_wages)
+        ann_inc_bt.insert(0,metro)
+        ann_inc_bt.insert(0,year)
+        df.loc[len(df)] = ann_inc_bt
+
+def final_adjustments_state(df):
     df[['1Adult-Y','1Adult_1Child-Y','1Adult_2Child-Y','1Adult_3Child-Y','2Adult1W-Y','2Adult1W_1Child-Y','2Adult1W_2Child-Y','2Adult1W_3Child-Y', '2Adult-Y','2Adult_1Child-Y','2Adult_2Child-Y','2Adult_3Child-Y','1Adult-W', '1Adult_1Child-W', '1Adult_2Child-W','1Adult_3Child-W', '2Adult1W-W', '2Adult1W_1Child-W', '2Adult1W_2Child-W','2Adult1W_3Child-W', '2Adult-W', '2Adult_1Child-W', '2Adult_2Child-W','2Adult_3Child-W']] = df[['1Adult-Y','1Adult_1Child-Y','1Adult_2Child-Y','1Adult_3Child-Y','2Adult1W-Y','2Adult1W_1Child-Y','2Adult1W_2Child-Y','2Adult1W_3Child-Y', '2Adult-Y','2Adult_1Child-Y','2Adult_2Child-Y','2Adult_3Child-Y','1Adult-W', '1Adult_1Child-W', '1Adult_2Child-W','1Adult_3Child-W', '2Adult1W-W', '2Adult1W_1Child-W', '2Adult1W_2Child-W','2Adult1W_3Child-W', '2Adult-W', '2Adult_1Child-W', '2Adult_2Child-W','2Adult_3Child-W']].apply(pd.to_numeric)
 
     #Set 2017 values for Louisiana as mean of 2016 and 2018 values
@@ -63,7 +84,13 @@ def final_adjustments(df):
 if __name__=='__main__':
     export_path = '/home/dhense/PublicData/Economic_analysis/intermediate_files/'
 
+    df_map = pd.read_excel("metro_mapper.xlsx")
+
+    metro_codes = list(df_map['CBSA_2003_Code'].astype(str).unique())
+
     df = pd.DataFrame(columns=['Year','State_FIPS','1Adult-Y','1Adult_1Child-Y','1Adult_2Child-Y','1Adult_3Child-Y','2Adult1W-Y','2Adult1W_1Child-Y','2Adult1W_2Child-Y','2Adult1W_3Child-Y', '2Adult-Y','2Adult_1Child-Y','2Adult_2Child-Y','2Adult_3Child-Y','1Adult-W', '1Adult_1Child-W', '1Adult_2Child-W','1Adult_3Child-W', '2Adult1W-W', '2Adult1W_1Child-W', '2Adult1W_2Child-W','2Adult1W_3Child-W', '2Adult-W', '2Adult_1Child-W', '2Adult_2Child-W','2Adult_3Child-W'])
+
+    df_metro = pd.DataFrame(columns=['Year','Metro_Code','1Adult-Y','1Adult_1Child-Y','1Adult_2Child-Y','1Adult_3Child-Y','2Adult1W-Y','2Adult1W_1Child-Y','2Adult1W_2Child-Y','2Adult1W_3Child-Y', '2Adult-Y','2Adult_1Child-Y','2Adult_2Child-Y','2Adult_3Child-Y','1Adult-W', '1Adult_1Child-W', '1Adult_2Child-W','1Adult_3Child-W', '2Adult1W-W', '2Adult1W_1Child-W', '2Adult1W_2Child-W','2Adult1W_3Child-W', '2Adult-W', '2Adult_1Child-W', '2Adult_2Child-W','2Adult_3Child-W'])
 
     #2012: missing data for state 24 and 26
     # url = 'https://web.archive.org/web/20120622033154/https://livingwage.mit.edu/'
@@ -75,7 +102,8 @@ if __name__=='__main__':
     # url = 'https://web.archive.org/web/20140921030413/http://livingwage.mit.edu/'
 
     #2016: Works - 51/51!
-    url16 = 'https://web.archive.org/web/20160601202248/http://livingwage.mit.edu/'
+    # url16 = 'https://web.archive.org/web/20160601202248/http://livingwage.mit.edu/'
+    url16 = 'https://web.archive.org/web/20160816142444/http://livingwage.mit.edu/'
 
     #2017: Works for 50/51 Missing Louisiana ('22'): Average 2016 and 2018 data
     url17 = 'https://web.archive.org/web/20170607031844/http://livingwage.mit.edu/'
@@ -98,24 +126,34 @@ if __name__=='__main__':
     url_list = [url16,url17,url18,url19,url20]
     # url_list = [url16]
 
+    
     for url in url_list:
 
         year = url[28:32]
 
-        for i in range(len(states)):
-            sleep(randint(1,5))
-            new_url = url+'states/'+states[i]
-            append_values(year, states[i],new_url, df)
+        # for i in range(len(states)):
+        #     sleep(randint(1,5))
+        #     append_state_values(year, states[i], url, df)
+
+        for i in range(len(metro_codes)):
+            sleep(randint(1,5))    
+            new_url = url+'metros/'+metro_codes[i]
+            try:
+                append_metro_values(year, metro_codes[i], new_url, df_metro)
+            except:
+                continue
+
     
-    df = final_adjustments(df)
+    # df = final_adjustments_state(df)
 
     toc = time.perf_counter()
     print(f"Parsing took {toc - tic:0.1f} seconds") 
 
-    print(len(df))
+    print(len(df_metro))
     # print(set(states) - set(df['State_FIPS'].value_counts().index))
 
-    df.to_csv(export_path+'livingwage.csv',index=False)
+    # df.to_csv(export_path+'livingwage.csv',index=False)
+    df_metro.to_csv(export_path+'livingwagemetro.csv',index=False)
 
 
     #Next steps
