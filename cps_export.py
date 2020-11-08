@@ -11,7 +11,7 @@ def extract_record(df,yr,m):
             - Rows begin as single string of numerical values
             - Breaks them up into unique fields and inserts those values into Pandas DataFrame columns 
     '''
-    col_dict = {'HHID':(0,15),'Ref_person':(117,119),'Person_line_num':(146,148),'Person_type':(160,162),'Age':(121,123),'Sex':(128,130),'Race':(138,140),'Hispanic':(140,142),'Marital_status':(124,126),'Country_of_birth':(162,165),'School_completed':(136,138),'Ever_active_duty':(130,132),'LF_recode':(179,181),'LF_recode2':(392,394),'Civilian_LF':(386,388),'Employed_nonfarm':(479,481),'Have_job':(205,207),'Unpaid_family_work':(183,185),'Recall_return':(276,278),'Recall_look':(280,282),'Job_offered':(331,333),'Job_offered_week':(358,360),'Available_ft':(249,251),'Job_search':(400,402),'Look_last_month':(293,295),'Look_last_year':(350,352),'Last_work':(564,566),'Discouraged':(388,390),'Retired':(566,568),'Disabled':(203,205),'Situation':(568,570),'FT_PT':(396,398),'FT_PT_status':(415,417),'Detailed_reason_part_time':(404,406),'Main_reason_part_time':(228,230),'Main_reason_not_full_time':(230,232),'Want_job':(346,348),'Want_job_ft':(226,228),'Want_job_ft_pt':(199,201),'Want_job_nilf':(417,419),'Reason_unemployment':(411,413),'Reason_not_looking':(348,350),'Hours_per_week':(217,219),'Hours_per_week_last':(242,244),'In_school':(574,576),'In_school_ft_pt':(576,578),'School_type':(578,580),'In_school_nilf':(580,582),'State_FIPS':(92,94),'County_FIPS':(100,103),'Metro_Code_Old':(96,100),'Metro_Size':(106,107),'Metro_Status':(104,105),'Region':(88,90),'Division':(90,91),'Family_Income':(38,40),'Household_Members':(58,60),'Family_Recode':(152,154),'Periodicity':(501,503),'Hourly_Status':(505,507),'Usual_Hours':(524,526),'Hourly_Pay_Main':(511,515),'Hourly_Rate_Out':(515,519),'Hourly_Rate_Recode':(519,523),'Weekly_Earnings':(526,534),'Overtime_Weekly':(539,547),'Overtime_Weekly2':(547,555),'Weeks_Paid':(558,560)}
+    col_dict = {'HHID':(0,15),'HHID2':(70,75),'Ref_person':(117,119),'Person_line_num':(146,148),'Person_type':(160,162),'Age':(121,123),'Sex':(128,130),'Race':(138,140),'Hispanic':(140,142),'Marital_status':(124,126),'Country_of_birth':(162,165),'Mother_Country_of_birth':(165,168),'Type_of_mother':(891,893),'Father_Country_of_birth':(168,171),'Type_of_father':(889,891),'Citizenship_Status':(171,173),'Immigrant_Year_Entry':(175,177),'When_Serve':(875,877),'High_School_Diploma':(821,823),'Highest_Grade_GED':(823,825),'School_completed':(136,138),'Ever_active_duty':(130,132),'LF_recode':(179,181),'LF_recode2':(392,394),'Civilian_LF':(386,388),'Employed_nonfarm':(479,481),'Have_job':(205,207),'Unpaid_family_work':(183,185),'Recall_return':(276,278),'Recall_look':(280,282),'Job_offered':(331,333),'Job_offered_week':(358,360),'Available_ft':(249,251),'Job_search':(400,402),'Look_last_month':(293,295),'Look_last_year':(350,352),'Last_work':(564,566),'Discouraged':(388,390),'Retired':(566,568),'Disabled':(203,205),'Situation':(568,570),'FT_PT':(396,398),'FT_PT_status':(415,417),'Detailed_reason_part_time':(404,406),'Main_reason_part_time':(228,230),'Main_reason_not_full_time':(230,232),'Want_job':(346,348),'Want_job_ft':(226,228),'Want_job_ft_pt':(199,201),'Want_job_nilf':(417,419),'Reason_unemployment':(411,413),'Reason_not_looking':(348,350),'Hours_per_week':(223,226),'Hours_per_week_last':(242,244),'In_school':(574,576),'In_school_ft_pt':(576,578),'School_type':(578,580),'In_school_nilf':(580,582),'State_FIPS':(92,94),'County_FIPS':(100,103),'Metro_Code_Old':(96,100),'Metro_Size':(106,107),'Metro_Status':(104,105),'Region':(88,90),'Division':(90,91),'Family_Income':(38,40),'Household_Members':(58,60),'Family_Recode':(152,154),'Periodicity':(501,503),'Hourly_Status':(505,507),'Usual_Hours':(524,526),'Hourly_Pay_Main':(511,515),'Hourly_Rate_Out':(515,519),'Hourly_Rate_Recode':(519,523),'Weekly_Earnings':(526,534),'Overtime_Weekly':(539,547),'Overtime_Weekly2':(547,555),'Weeks_Paid':(558,560)}
 
     df_p = pd.DataFrame()
 
@@ -54,6 +54,12 @@ def extract_record(df,yr,m):
     df_p['Metro_Code'] = df_p['Metro_Code'].fillna(0)
     df_p['Metro_Code'] = df_p['Metro_Code'].astype(int)
 
+    df_p['Hourly_Rate_Recode'] = df_p['Hourly_Rate_Recode'].astype(int)
+    df_p['Usual_Hours'] = df_p['Usual_Hours'].astype(int)
+    df_p['Weekly_Earnings'] = df_p['Weekly_Earnings'].astype(int)
+    df_p['Hours_per_week']=df_p['Hours_per_week'].astype(int)
+    # df_p['Employed'] = np.where(df_p['LF_recode'].isin([' 1',' 2']),1,0)
+    
     #Calculate number of dependent children per Household (children who are not employed)
     children = pd.DataFrame(df_p[(df_p['Family_Recode']==' 3')&(df_p['LF_recode'].isin([' 1',' 2'])==False)].groupby('HHID')['SID'].count()).reset_index().rename(columns={'SID':'Num_Children_Dependent'})
     df_p = df_p.merge(children,on='HHID',how='left').fillna(0)
@@ -67,22 +73,37 @@ def extract_record(df,yr,m):
 
     #Calculate number of working family members per Household (only reference person and spouse, not children)
     df_p['Employed'] = np.where(df_p['LF_recode'].isin([' 1',' 2']),1,0)
-    working_fam = pd.DataFrame(df_p[df_p['Family_Recode'].isin([' 1',' 2'])].groupby('HHID')['Employed'].sum()).reset_index().rename(columns={'Employed':'Num_Working_Family_Members'})
+    working_fam = pd.DataFrame(df_p[df_p['Family_Recode'].isin([' 1',' 2',' 3'])].groupby('HHID')['Employed'].sum()).reset_index().rename(columns={'Employed':'Num_Working_Family_Members'})
     df_p = df_p.merge(working_fam,on='HHID',how='left').fillna(0)
     df_p['Num_Working_Family_Members'] = df_p['Num_Working_Family_Members'].astype(int)
 
-    #Calculate number of working individuals (children, not family members and other relatives within a household)
-    df_p['Working_Individual'] = np.where((df_p['Family_Recode'].isin(['-1',' 0',' 3',' 4']))&(df_p['LF_recode'].isin([' 1',' 2'])),1,0)
+    #Calculate number of working individuals in family(not family members and other relatives within a household not included)
+    df_p['Working_Individual'] = np.where((df_p['Family_Recode']==' 0')&(df_p['LF_recode'].isin([' 1',' 2'])),1,0)
     working_individual_hh = pd.DataFrame(df_p.groupby('HHID')['Working_Individual'].sum()).reset_index().rename(columns={'Working_Individual':'Num_Working_Individual'})
     df_p = df_p.merge(working_individual_hh,on='HHID',how='left')
 
     #Filter for only HH's with family income range data, no working individuals in HH except reference person and/or spouse
     df_family = df_p[(df_p['Family_Income'].isin([-1,-2,-3])==False)&(df_p['Num_Working_Individual']==0)]
-    df_family = pd.DataFrame(df_family.groupby('HHID')['Year','Family_Income','Num_Children_Dependent','Num_Family_Adults','Num_Working_Family_Members'].max()).reset_index()
+    df_family = pd.DataFrame(df_family.groupby(['HHID','State_FIPS','Metro_Code'])['Year','Family_Income','Employed','Num_Children_Dependent','Num_Family_Adults','Num_Working_Family_Members'].max()).reset_index()
+    
+    # df_family = df_p[(df_p['Family_Income'].isin([-1,-2,-3])==False)]
+    # df_family = pd.DataFrame(df_family.groupby('HHID').agg({'Year':'max', 'Family_Income':'max', 'Employed':'sum'})).reset_index()
 
     #Assume largest value per range (for value 14, 100000 is used as a proxy for the ceiling; the actual mapping is greater than 75K)
     income_mapper = {1:5000, 2:7500, 3:10000, 4:12500, 5:15000, 6:20000, 7:25000, 8:30000, 9:35000, 10:40000, 11:50000, 12:60000, 13:75000, 14:100000}
     df_family = df_family.replace({'Family_Income':income_mapper})
+
+    df_family['Income_Per_Working_Family_Member'] = df_family['Family_Income']/df_family['Num_Working_Family_Members']
+
+    df_family = df_family.replace(np.inf,'NA')
+
+    df_family[df_family['Income_Per_Working_Family_Member']!='NA']
+
+    #Differentiate between df_family rows with metro codes and those without (use state instead)
+    df_family_metro = df_family[df_family['Metro_Code']!=0]
+    df_family_state = df_family[df_family['Metro_Code']==0]
+
+
 
     #Living Wage data
     df_lw = pd.read_csv('/home/dhense/PublicData/Economic_analysis/intermediate_files/livingwagemetro.csv')
@@ -103,9 +124,66 @@ def extract_record(df,yr,m):
     df_lw = df_lw.astype({'Year':int, 'Metro_Code':int})
     
     # df_p = df_p.merge(df_lw,on=['Year','Metro_Code'],how='left')
+    
+    df_family['LivingWage_Category'] = np.where((df_family['Num_Family_Adults']==1)&(df_family['Num_Working_Family_Members']==1)&(df_family['Num_Children_Dependent']==0),'1Adult-Y',np.where((df_family['Num_Family_Adults']==1)&(df_family['Num_Working_Family_Members']==1)&(df_family['Num_Children_Dependent']==1),'1Adult_1Child-Y',np.where((df_family['Num_Family_Adults']==1)&(df_family['Num_Working_Family_Members']==1)&(df_family['Num_Children_Dependent']==2),'1Adult_2Child-Y',np.where((df_family['Num_Family_Adults']==1)&(df_family['Num_Working_Family_Members']==1)&(df_family['Num_Children_Dependent']>=3),'1Adult_3Child-Y',np.where((df_family['Num_Family_Adults']>=2)&(df_family['Num_Working_Family_Members']==1)&(df_family['Num_Children_Dependent']==0),'2Adult1W-Y',np.where((df_family['Num_Family_Adults']>=2)&(df_family['Num_Working_Family_Members']==1)&(df_family['Num_Children_Dependent']==1),'2Adult1W_1Child-Y',np.where((df_family['Num_Family_Adults']>=2)&(df_family['Num_Working_Family_Members']==1)&(df_family['Num_Children_Dependent']==2),'2Adult1W_2Child-Y',np.where((df_family['Num_Family_Adults']>=2)&(df_family['Num_Working_Family_Members']==1)&(df_family['Num_Children_Dependent']>=3),'2Adult1W_3Child-Y',np.where((df_family['Num_Family_Adults']>=2)&(df_family['Num_Working_Family_Members']>=2)&(df_family['Num_Children_Dependent']==0),'2Adult-Y',np.where((df_family['Num_Family_Adults']>=2)&(df_family['Num_Working_Family_Members']>=2)&(df_family['Num_Children_Dependent']==1),'2Adult_1Child-Y',np.where((df_family['Num_Family_Adults']>=2)&(df_family['Num_Working_Family_Members']>=2)&(df_family['Num_Children_Dependent']==2),'2Adult_2Child-Y',np.where((df_family['Num_Family_Adults']>=2)&(df_family['Num_Working_Family_Members']>=2)&(df_family['Num_Children_Dependent']>=3),'2Adult_3Child-Y','NA'))))))))))))
+    
+
+    #Hourly Wages
+    wages = [i for i in df_p[(df_p['Hourly_Rate_Recode'].isin([-1,0])==False)&(df_p['Employed']==1)]['Hourly_Rate_Recode'].value_counts().index]
+
+    #Number employed with hourly wage data
+    employed_hourly = len(df_p[(df_p['Hourly_Rate_Recode'].isin([-1,0])==False)&(df_p['Employed']==1)])
+
+    #Assuming $11 living wage
+    under = [i for i in df_p[(df_p['Hourly_Rate_Recode'].isin([-1,0])==False)&(df_p['Employed']==1)]['Hourly_Rate_Recode'].values if int(i)<1100]
+    num_under = len(under)
+
+    #Amount of unemployment
+    under_lw = len(under)-np.sum([i/1100 for i in under])
+
+    #Rate of unemployment
+    under_lw_rate = under_lw/employed_hourly
+
+    
+    #Look at usual hours and weekly earnings
+
+    #Identifying individual people
+    iden = pd.DataFrame(df_p.groupby(['Age','Sex','Race','Hispanic','Country_of_birth','Mother_Country_of_birth','Type_of_mother','Father_Country_of_birth','Type_of_father','When_Serve','Immigrant_Year_Entry','Citizenship_Status','High_School_Diploma','Highest_Grade_GED'])['SID'].count()).reset_index()
+    # iden = iden[iden['Age'].astype(int)>14]
 
 
+    #Weekly Earnings divided by usual hours should equal hourly rate!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #2016: 13864 Weekly earnings, 6161 usual hours
+    df_comp = pd.DataFrame()
+    
+    df_comp['Hourly_Rate_Calc'] = df_p[(df_p['Weekly_Earnings'].isin([-1,0])==False)&(df_p['Employed']==1)]['Weekly_Earnings']/df_p[(df_p['Usual_Hours'].isin([-1,0])==False)&(df_p['Employed']==1)]['Usual_Hours']
 
+    df_comp = pd.DataFrame(df_comp[df_comp['Hourly_Rate_Calc'].isnull()==False])
+
+    df_comp['Hourly_Rate_Recode'] = pd.DataFrame(df_p[(df_p['Hourly_Rate_Recode'].isin([-1,0])==False)&(df_p['Employed']==1)]['Hourly_Rate_Recode']).loc[df_comp.index.values]
+    #Next:
+    #Extrapolate %hourly wages below living wage level to all employed w/in data?
+    
+    #Divide Weekly Earnings by hours per week to get hourly earnings. Extrapolate to rest of employed thats missing data
+
+    df_comp2 = pd.DataFrame()
+    df_comp2['Weekly_Earnings'] = df_p[(df_p['Weekly_Earnings'].isin([-1,0])==False)&(df_p['Employed']==1)&(df_p['Hours_per_week'].isin([-1,-4])==False)]['Weekly_Earnings']/100
+    df_comp2['Hours_per_week'] = df_p[(df_p['Weekly_Earnings'].isin([-1,0])==False)&(df_p['Employed']==1)&(df_p['Hours_per_week'].isin([-1,-4])==False)]['Hours_per_week']
+    df_comp2['Hourly_Earnings'] = df_comp2['Weekly_Earnings']/df_comp2['Hours_per_week']
+
+    #Partial wage unemployment
+    comp2_unemployment = (1-(df_comp2[df_comp2['Hourly_Earnings']<11]['Hourly_Earnings']/11)).values.sum()
+
+    #Scaled to full employed list
+    wage_unemployed = (comp2_unemployment/len(df_comp2))*len(df_p[df_p['Employed']==1])
+
+    u3_unemployed = len(df_p[df_p['LF_recode'].isin([' 3',' 4'])])
+
+    u3_employed = len(df_p[df_p['Employed']==1])
+
+    #Almost double the u3 rate
+    wage_adjusted_rate = (u3_unemployed+wage_unemployed)/(u3_unemployed+u3_employed)
+    u3rate = (u3_unemployed)/(u3_unemployed+u3_employed)
 
     ######################################################################################################################################
 
@@ -128,13 +206,13 @@ if __name__=='__main__':
 
 
     tic = time.perf_counter()
-    for year in range(1999,2000):
+    for year in range(2016,2017):
         for m in months:
             if year==2020 and m=='sep':
                 break
-            df_cps = pd.read_csv(fp+str(year)+'/'+m+str(year)[-2:]+'pub.dat')
-            df_cps, df_family, df_lw = extract_record(df_cps,str(year),str(months_dict[m]))
-            df_cps.drop_duplicates(subset='PID',keep=False, inplace=True)
-            df_cps.to_csv(export_path+'cps_'+m+str(year)+'.csv',index=False)
+            df_p = pd.read_csv(fp+str(year)+'/'+m+str(year)[-2:]+'pub.dat')
+            df_p, df_family, df_lw = extract_record(df_p,str(year),str(months_dict[m]))
+            df_p.drop_duplicates(subset='PID',keep=False, inplace=True)
+            df_p.to_csv(export_path+'cps_'+m+str(year)+'.csv',index=False)
     toc = time.perf_counter()
     print(f"Exports took {toc - tic:0.1f} seconds") 
