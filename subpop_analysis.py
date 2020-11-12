@@ -17,10 +17,10 @@ warnings.filterwarnings('ignore')
 # spark = SparkSession.builder.appName('pandasToSparkDF').getOrCreate()
 
 
-def growth(df,start_year,end_year,period,subpop=None,stat='UR'):
+def growth(df,start_year,end_year,period,subpop=None,start_month='jan',end_month='dec',stat='UR'):
     '''
-        Calculate growth rate for given statistic 'stat' on a frequency (e.g. yearly) 
-        specified by 'period' between 'start_year' and 'end_year' for all subpopulations
+        Calculate growth rate for given statistic 'stat' on a frequency (e.g. yearly) specified by 
+        'period' between 'start_month' of 'start_year' and 'end_month' of 'end_year' for all subpopulations
 
         Must separate out cases where period does not divide evenly into time frame (end_year-start_year)
     '''
@@ -36,12 +36,16 @@ def growth(df,start_year,end_year,period,subpop=None,stat='UR'):
         ratio = int(math.ceil(len(df_sub['Year'].unique())/period))
         for yr in range(ratio):
             if len(df_sub['Year'].unique()) % period > 0:
-                ur = ((df_sub[(df_sub['Year']==end_year-period+ratio+yr-1) & (df_sub['Month']=='dec')][stat].values[0])-(df_sub[(df_sub['Year']==start_year+yr) & (df_sub['Month']=='jan')][stat].values[0]))/(df_sub[(df_sub['Year']==start_year+yr) & (df_sub['Month']=='jan')][stat].values[0])
-                yr_growth = yr_growth.append(pd.DataFrame([{'SubPop':s,'Start_year':start_year,'End_year':end_year,'Period':str(str(start_year+yr)+'-'+str(end_year-period+ratio+yr-1)),str(stat)+' Growth %'+' ('+str(period)+'YR)':ur*100}])).reset_index(drop=True)
+                ur = ((df_sub[(df_sub['Year']==end_year-period+ratio+yr-1) & (df_sub['Month']==end_month)][stat].values[0])-(df_sub[(df_sub['Year']==start_year+yr) & (df_sub['Month']==start_month)][stat].values[0]))/(df_sub[(df_sub['Year']==start_year+yr) & (df_sub['Month']==start_month)][stat].values[0])
+                yr_growth = yr_growth.append(pd.DataFrame([{'SubPop':s,'Start_month':start_month,'Start_year':start_year,'End_month':end_month,'End_year':end_year,'Period':str(str(start_year+yr)+'-'+str(end_year-period+ratio+yr-1)),str(stat)+' Growth %'+' ('+str(period)+'YR)':ur*100}])).reset_index(drop=True)
             else:
-                ur = ((df_sub[(df_sub['Year']==end_year-ratio+yr+1) & (df_sub['Month']=='dec')][stat].values[0])-(df_sub[(df_sub['Year']==start_year+yr) & (df_sub['Month']=='jan')][stat].values[0]))/(df_sub[(df_sub['Year']==start_year+yr) & (df_sub['Month']=='jan')][stat].values[0])
-                yr_growth = yr_growth.append(pd.DataFrame([{'SubPop':s,'Start_year':start_year,'End_year':end_year,'Period':str(str(start_year+yr)+'-'+str(end_year-ratio+yr+1)),str(stat)+' Growth %'+' ('+str(period)+'YR)':ur*100}])).reset_index(drop=True)
-    return yr_growth
+                ur = ((df_sub[(df_sub['Year']==end_year-ratio+yr+1) & (df_sub['Month']==end_month)][stat].values[0])-(df_sub[(df_sub['Year']==start_year+yr) & (df_sub['Month']==start_month)][stat].values[0]))/(df_sub[(df_sub['Year']==start_year+yr) & (df_sub['Month']==start_month)][stat].values[0])
+                yr_growth = yr_growth.append(pd.DataFrame([{'SubPop':s,'Start_month':start_month,'Start_year':start_year,'End_month':end_month,'End_year':end_year,'Period':str(str(start_year+yr)+'-'+str(end_year-ratio+yr+1)),str(stat)+' Growth %'+' ('+str(period)+'YR)':ur*100}])).reset_index(drop=True)
+
+    #Get rid of infinite and nan values
+    yr_growth = yr_growth.replace([np.inf, -np.inf], np.nan)
+    yr_growth = yr_growth[yr_growth[str(stat)+' Growth %'+' ('+str(period)+'YR)'].isnull()==False]
+    return yr_growth.reset_index(drop=True)
 
 
 
@@ -67,7 +71,11 @@ if __name__=='__main__':
     start_year = 1999
     end_year = 1999
 
-    u3_growth = growth(df,start_year,end_year,period,stat='U3_weighted')
+    u3_growth = growth(df,start_year,end_year,period,start_month='apr',end_month='aug',stat='U3_weighted')
+
+
+    #To add rolling avrage for months - turn months into ints, use between in mask?
+
 
     # df_spark = sqlContext.read.format('csv').options(header='true', inferSchema='true').load('/home/dhense/PublicData/Economic_analysis/intermediate_files/dec2000.csv')
     # print(df_spark.show(5))
