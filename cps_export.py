@@ -5,7 +5,7 @@ import numpy as np
 
 
 
-def extract_record(df,yr,m):
+def extract_record(df,yr,m,df_wage,df_wage_state):
     '''
         Preprocessing:
             - Rows begin as single string of numerical values
@@ -112,14 +112,9 @@ def extract_record(df,yr,m):
 
     #########################################################################################################################
 
-    #Living Wage data
-    df_lw = pd.read_csv('/home/dhense/PublicData/Economic_analysis/intermediate_files/livingwagemetro.csv')
-    df_lw_state = pd.read_csv('/home/dhense/PublicData/Economic_analysis/intermediate_files/livingwage.csv',converters={'State_FIPS': lambda x: str(x).zfill(2)})
 
-    df_wage = livingwage(df_lw,'Metro_Code')
     df_p = df_p.merge(df_wage,on=['Metro_Code','Year','LivingWage_Category'],how='left')
 
-    df_wage_state = livingwage(df_lw_state,'State_FIPS')
     df_p.loc[(df_p['LivingWage_Category']!='NA')&(df_p['LivingWage'].isnull()),'LivingWage'] = df_p.merge(df_wage_state,on=['State_FIPS','Year','LivingWage_Category'],how='left')[(df_p['LivingWage_Category']!='NA')&(df_p['LivingWage'].isnull())]['LivingWage_y']
     
     
@@ -339,6 +334,13 @@ if __name__=='__main__':
     # export_path = '/media/dhense/Elements/PublicData/cps_csv_files/'
     export_path = '/home/dhense/PublicData/cps_files/'
 
+    #Living Wage data
+    df_lw = pd.read_csv('/home/dhense/PublicData/Economic_analysis/intermediate_files/livingwagemetro.csv')
+    df_lw_state = pd.read_csv('/home/dhense/PublicData/Economic_analysis/intermediate_files/livingwage.csv',converters={'State_FIPS': lambda x: str(x).zfill(2)})
+
+    df_wage = livingwage(df_lw,'Metro_Code')
+    df_wage_state = livingwage(df_lw_state,'State_FIPS')
+
     # months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
     months = ['jan']
     months_dict = {'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,'jul':7,'aug':8,'sep':9,'oct':10,'nov':11,'dec':12}
@@ -350,7 +352,7 @@ if __name__=='__main__':
             if year==2020 and m=='sep':
                 break
             df_p = pd.read_csv(fp+str(year)+'/'+m+str(year)[-2:]+'pub.dat')
-            df_p, wage_adjusted_rate, u3rate, df_lw = extract_record(df_p,str(year),str(months_dict[m]))
+            df_p, wage_adjusted_rate, u3rate, df_lw = extract_record(df_p,str(year),str(months_dict[m]),df_wage,df_wage_state)
             df_p.drop_duplicates(subset='PID',keep=False, inplace=True)
             df_p.to_csv(export_path+'cps_'+m+str(year)+'.csv',index=False)
     toc = time.perf_counter()

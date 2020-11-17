@@ -17,10 +17,15 @@ warnings.filterwarnings('ignore')
 # spark = SparkSession.builder.appName('pandasToSparkDF').getOrCreate()
 
 
-def growth(df,start_year,end_year,period,subpop=None,start_month='jan',end_month='dec',stat='UR'):
+def growth(df,start_year,end_year,period,subpop=None,start_month='jan',end_month='dec',roll_avg=1,stat='UR'):
     '''
         Calculate growth rate for given statistic 'stat' on a frequency (e.g. yearly) specified by 
         'period' between 'start_month' of 'start_year' and 'end_month' of 'end_year' for all subpopulations
+
+        roll_avg takes an average of months around start_month and end_month. For example, roll_avg of 3 for 
+        start_month = 2 and end month = 9 will calculate the mean of months 1,2 and 3 for start_month and months
+        8,9 and 10 for end month. Defaults to 1 where the formula only takes into account the values of the
+        months provided with no average of months around them
 
         Must separate out cases where period does not divide evenly into time frame (end_year-start_year)
     '''
@@ -36,10 +41,10 @@ def growth(df,start_year,end_year,period,subpop=None,start_month='jan',end_month
         ratio = int(math.ceil(len(df_sub['Year'].unique())/period))
         for yr in range(ratio):
             if len(df_sub['Year'].unique()) % period > 0:
-                ur = ((df_sub[(df_sub['Year']==end_year-period+ratio+yr-1) & (df_sub['Month']==end_month)][stat].values[0])-(df_sub[(df_sub['Year']==start_year+yr) & (df_sub['Month']==start_month)][stat].values[0]))/(df_sub[(df_sub['Year']==start_year+yr) & (df_sub['Month']==start_month)][stat].values[0])
+                ur = ((df_sub[(df_sub['Year']==end_year-period+ratio+yr-1) & (df_sub['Month']>=(end_month-((roll_avg-1)/2))) & (df_sub['Month']<=(end_month+(roll_avg-1)/2))][stat].mean())-(df_sub[(df_sub['Year']==start_year+yr) & (df_sub['Month']>=(start_month-(roll_avg-1)/2)) & (df_sub['Month']<=(start_month+(roll_avg-1)/2))][stat].mean()))/(df_sub[(df_sub['Year']==start_year+yr) & (df_sub['Month']>=(start_month-(roll_avg-1)/2)) & (df_sub['Month']<=(start_month+(roll_avg-1)/2))][stat].mean())
                 yr_growth = yr_growth.append(pd.DataFrame([{'SubPop':s,'Start_month':start_month,'Start_year':start_year,'End_month':end_month,'End_year':end_year,'Period':str(str(start_year+yr)+'-'+str(end_year-period+ratio+yr-1)),str(stat)+' Growth %'+' ('+str(period)+'YR)':ur*100}])).reset_index(drop=True)
             else:
-                ur = ((df_sub[(df_sub['Year']==end_year-ratio+yr+1) & (df_sub['Month']==end_month)][stat].values[0])-(df_sub[(df_sub['Year']==start_year+yr) & (df_sub['Month']==start_month)][stat].values[0]))/(df_sub[(df_sub['Year']==start_year+yr) & (df_sub['Month']==start_month)][stat].values[0])
+                ur = ((df_sub[(df_sub['Year']==end_year-ratio+yr+1) & (df_sub['Month']>=(end_month-(roll_avg-1)/2)) & (df_sub['Month']<=(end_month+(roll_avg-1)/2))][stat].mean())-(df_sub[(df_sub['Year']==start_year+yr) & (df_sub['Month']>=(start_month-(roll_avg-1)/2)) & (df_sub['Month']<=(start_month+(roll_avg-1)/2))][stat].mean()))/(df_sub[(df_sub['Year']==start_year+yr) & (df_sub['Month']>=(start_month-(roll_avg-1)/2)) & (df_sub['Month']<=(start_month+(roll_avg-1)/2))][stat].mean())
                 yr_growth = yr_growth.append(pd.DataFrame([{'SubPop':s,'Start_month':start_month,'Start_year':start_year,'End_month':end_month,'End_year':end_year,'Period':str(str(start_year+yr)+'-'+str(end_year-ratio+yr+1)),str(stat)+' Growth %'+' ('+str(period)+'YR)':ur*100}])).reset_index(drop=True)
 
     #Get rid of infinite and nan values
@@ -62,16 +67,27 @@ if __name__=='__main__':
     df = pickle.load(tmp)
     tmp.close()
 
-    schema = StructType([
-            StructField('Year', IntegerType(), True),StructField('Month', StringType(), True),StructField('SubPop', StringType(), True),StructField('Num_employed', IntegerType(), True),StructField('Num_unemployed', IntegerType(), True),StructField('Num_LF', IntegerType(), True),StructField('Num_total', IntegerType(), True),StructField('LFPR', FloatType(), True),StructField('UR', FloatType(), True),StructField('UR_weighted', FloatType(), True),StructField('U6', FloatType(), True),StructField('U6_weighted', FloatType(), True)
-    ])
+    #Remove brackets and curly braces from SubPop column
+    df['SubPop'] = df['SubPop'].str.replace(r'[','').str.replace(r']','').str.replace(r'{','').str.replace(r'}','')
 
+    #Change age group from category number (e.g. (2, 3),(3, 4), etc...) into actual range (e.g. 20-29,25-34, etc...)
+    age_groups = {'(2, 3)':'20-29','(3, 4)':'25-34','(4, 5)':'30-39','(5, 6)':'35-44','(6, 7)':'40-49','(7, 8)':'45-54','(8, 9)':'50-59','(9, 10)':'55-64'}
+    for k,v in age_groups.items():
+        df.loc[df['SubPop'].str.contains(k),'SubPop'] = df[df['SubPop'].str.contains(k)]['SubPop'].str.replace(k,v)
+
+    # schema = StructType([
+    #         StructField('Year', IntegerType(), True),StructField('Month', StringType(), True),StructField('SubPop', StringType(), True),StructField('Num_employed', IntegerType(), True),StructField('Num_unemployed', IntegerType(), True),StructField('Num_LF', IntegerType(), True),StructField('Num_total', IntegerType(), True),StructField('LFPR', FloatType(), True),StructField('UR', FloatType(), True),StructField('UR_weighted', FloatType(), True),StructField('U6', FloatType(), True),StructField('U6_weighted', FloatType(), True)
+    # ])
+
+    #Turn month field into int
+    months_dict = {'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,'jul':7,'aug':8,'sep':9,'oct':10,'nov':11,'dec':12}
+    df['Month'] = df['Month'].map(lambda x: months_dict[x])
 
     period = 1
     start_year = 1999
     end_year = 1999
 
-    u3_growth = growth(df,start_year,end_year,period,start_month='apr',end_month='aug',stat='U3_weighted')
+    u3_growth = growth(df,start_year,end_year,period,start_month=4,end_month=8,roll_avg=3,stat='U3_weighted')
 
 
     #To add rolling avrage for months - turn months into ints, use between in mask?
