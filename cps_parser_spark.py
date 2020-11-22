@@ -250,6 +250,7 @@ def refine_vars(df_cps):
 
     df_cps['Want_work'] = np.where((df_cps['Want_job']=='Yes, Or Maybe, It Depends')|(df_cps['Want_job_nilf']=='Want A Job')|(df_cps['Want_job_ft_pt']=='Yes'),'Yes','No')
     '''
+    '''
     #Calculate U3 Unemployed
     df_cps = df_cps.withColumn('Unemployed_U3',df_cps['LF_recode'])
     df_cps = df_cps.withColumn('Unemployed_U3',func.when(df_cps['LF_recode'].isin(['Unemployed - on layoff','Unemployed - looking']),'Yes').otherwise(df_cps['Unemployed_U3']))
@@ -263,6 +264,13 @@ def refine_vars(df_cps):
     df_cps = df_cps.withColumn('Unemployed_U6',func.when(df_cps['Unemployed_U6']!='Yes','No').otherwise(df_cps['Unemployed_U6']))
     df_cps = df_cps.fillna({'Unemployed_U6':'No'})
 
+    # Calculate Self Unemployed
+    df_cps = df_cps.withColumn('Wage_Unemployed',df_cps['LF_recode'])
+    df_cps = df_cps.withColumn('Wage_Unemployed',func.when(df_cps['Wage_Ratio']>0,'Yes').otherwise(df_cps['Wage_Unemployed']))
+    df_cps = df_cps.withColumn('Wage_Unemployed',func.when(df_cps['Wage_Unemployed']!='Yes','No').otherwise(df_cps['Wage_Unemployed']))
+    df_cps = df_cps.fillna({'Wage_Unemployed':'No'})
+    # print(df_cps.groupby('Year','Month').select(col('Unemployment_Self')).sum())
+
     #Calculate in Labor Force U3
     df_cps = df_cps.withColumn('Labor_force_U3',df_cps['LF_recode'])
     df_cps = df_cps.withColumn('Labor_force_U3',func.when(df_cps['LF_recode'].isin(['Unemployed - on layoff','Unemployed - looking','Employed - at work','Employed - absent']),'Yes').otherwise(df_cps['Labor_force_U3']))
@@ -274,7 +282,7 @@ def refine_vars(df_cps):
     df_cps = df_cps.withColumn('Labor_force_U6',func.when((df_cps['LF_recode'].isin(['Unemployed - on layoff','Unemployed - looking','Employed - at work','Employed - absent'])|(df_cps['Unemployed_U6']=='Yes')),'Yes').otherwise(df_cps['Labor_force_U6']))
     df_cps = df_cps.withColumn('Labor_force_U6',func.when(df_cps['Labor_force_U6']!='Yes','No').otherwise(df_cps['Labor_force_U6']))
     df_cps = df_cps.fillna({'Labor_force_U6':'No'})
-
+    '''
     return df_cps
 
 
@@ -377,6 +385,7 @@ def refine_df_state(df_state):
 
 if __name__=='__main__':
     fp = '/media/dhense/Elements/PublicData/cps_csv_files/'
+    # fp = '/home/dhense/PublicData/cps_files/'
     state_pop_pickle = 'state_pop.pickle'
     pickle_path = '/home/dhense/PublicData/Economic_analysis/intermediate_files/'
     export_path = '/home/dhense/PublicData/Economic_analysis/intermediate_files/cps_csv/'
@@ -388,7 +397,6 @@ if __name__=='__main__':
 
     
     df_state = refine_df_state(df_state)
-    # print(df_state.show())
     df_totals = df_state.groupBy('Year').sum('POPESTIMATE')
     
 
@@ -397,6 +405,8 @@ if __name__=='__main__':
     year = 1999
     m='jan'
     df_master = sqlContext.read.format('csv').options(header='true', inferSchema='true').load(fp+'cps_'+m+str(year)+'.csv')
+    
+    
     
     months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
     # months = ['feb']
@@ -497,7 +507,7 @@ if __name__=='__main__':
     
     #Monthly export takes around 1 minute per file. This is too long...
     # months = ['jan']
-    # months_dict = {'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,'jul':7,'aug':8,'sep':9,'oct':10,'nov':11,'dec':12}
+    months_dict = {'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,'jul':7,'aug':8,'sep':9,'oct':10,'nov':11,'dec':12}
     tic5 = time.perf_counter()
     for year in range(1999,2000):
         for m in months:
@@ -526,7 +536,7 @@ if __name__=='__main__':
     #This is great - just need to fix Weight function
     #Unweighted
     #print(df_master.groupBy('Unemployed_U3').count().where(col('Unemployed_U3')=='Yes').select(col('count')).collect()[0][0]/lfu3)
-
+    '''
     tic6 = time.perf_counter()
 
     lendf = df_master.count()
@@ -549,6 +559,9 @@ if __name__=='__main__':
     df_lfpr_u6 = df_master.groupBy('Month','Year','Labor_force_U6').agg(when(col('Labor_force_U6')=='Yes', func.sum('Weight')/lendf).alias('LFPR_U6_Weighted')).where(col('Labor_force_U6')=='Yes').select('Month','Year','LFPR_U6_Weighted')
     # print(df_lfpr_u6.show())
 
+    df_self = df_master.groupBy('Month','Year','Wage_Unemployed').agg(when(col('Wage_Unemployed')=='Yes', func.sum('Wage_Ratio')).alias('Wage_Weighted')).where(col('Wage_Unemployed')=='Yes').select('Month','Year','Wage_Weighted')
+    print(df_self.show())
+
     df_stats = df_u3.join(df_lfpr_u3,on=['Month','Year'], how='left')
     df_stats = df_stats.join(df_u6,on=['Month','Year'], how='left')
     df_stats = df_stats.join(df_lfpr_u6,on=['Month','Year'], how='left')
@@ -557,4 +570,4 @@ if __name__=='__main__':
 
     toc6 = time.perf_counter()
     print(f"Stat calcs took {toc6 - tic6:0.1f} seconds")
-    
+    '''

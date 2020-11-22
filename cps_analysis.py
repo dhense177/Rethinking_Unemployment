@@ -395,7 +395,7 @@ if __name__=='__main__':
     for l in lst_flat:
         final_list.append(list(product(*l)))
     final_flat = list(chain.from_iterable(final_list))
-    print(len(final_flat))
+    # print(len(final_flat))
 
     
     # final_flat_sub = final_flat[300:302]
@@ -461,11 +461,11 @@ if __name__=='__main__':
 
 
                 tic1 = time.perf_counter()
-                data = pd.DataFrame([{'Year':year,'Month':m,'SubPop':[f[i] for i in range(len(f))],'Pop_percentage':df_sub['Weight'].sum()/weight_sum,'U3_weighted':len(df_sub[df_sub.Unemployed_U3=='Yes'])/len(df_sub[df_sub.Labor_force_U3=='Yes']),'LFPR_U3':len(df_sub[df_sub.Labor_force_U3=='Yes'])/len_sub,'U6_weighted':len(df_sub[df_sub.Unemployed_U6=='Yes'])/len(df_sub[df_sub.Labor_force_U6=='Yes']),'LFPR_U6':len(df_sub[df_sub.Labor_force_U6=='Yes'])/len_sub}])
+                data = pd.DataFrame([{'Year':year,'Month':m,'SubPop':[f[i] for i in range(len(f))],'Pop_percentage':df_sub['Weight'].sum()/weight_sum,'U3_Rate':len(df_sub[df_sub.Unemployed_U3=='Yes'])/len(df_sub[df_sub.Labor_Force_U3=='Yes']),'U3_LFPR':len(df_sub[df_sub.Labor_Force_U3=='Yes'])/len_sub,'U6_Rate':len(df_sub[df_sub.Unemployed_U6=='Yes'])/len(df_sub[df_sub.Labor_Force_U6=='Yes']),'U6_LFPR':len(df_sub[df_sub.Labor_Force_U6=='Yes'])/len_sub}])
 
                 df_data = df_data.append(data).reset_index(drop=True)
                 count+=1
-                print(count)
+                # print(count)
 
 
                 '''
@@ -521,7 +521,7 @@ if __name__=='__main__':
             toc = time.perf_counter()
             toc_count += toc-tic    
             print(f"Subpop calc took {toc_count:0.1f} seconds")    
-
+    '''
     #get subpops which have values for every month in dataset
     df_data['SubPop'] = df_data['SubPop'].astype(str)
     subpops = df_data.groupby('SubPop')['Month'].count()[df_data.groupby('SubPop')['Month'].count()==12].index
@@ -531,6 +531,7 @@ if __name__=='__main__':
     tmp = open('/home/dhense/PublicData/Economic_analysis/intermediate_files/subpop_data.pickle','wb')
     pickle.dump(df_data,tmp)
     tmp.close()
+    '''
 '''
     print(f"DataFrame filter took {toc_count:0.1f} seconds") 
     print(f"Recode counts took {toc1_count:0.1f} seconds")

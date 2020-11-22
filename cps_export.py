@@ -83,30 +83,7 @@ def extract_record(df,yr,m,df_wage,df_wage_state):
     df_p = df_p.merge(working_individual_hh,on='HHID',how='left')
 
     #########################################################################################################################
-    #DF_family
-    '''
-    #Filter for only HH's with family income range data, no working individuals in HH except reference person and/or spouse
-    df_family = df_p[(df_p['Family_Income'].isin([-1,-2,-3])==False)&(df_p['Num_Working_Individual']==0)]
-    df_family = pd.DataFrame(df_family.groupby(['HHID','State_FIPS','Metro_Code'])['Year','Family_Income','Employed','Num_Children_Dependent','Num_Family_Adults','Num_Working_Family_Members'].max()).reset_index()
-    
-    # df_family = df_p[(df_p['Family_Income'].isin([-1,-2,-3])==False)]
-    # df_family = pd.DataFrame(df_family.groupby('HHID').agg({'Year':'max', 'Family_Income':'max', 'Employed':'sum'})).reset_index()
 
-    #Assume largest value per range (for value 14, 100000 is used as a proxy for the ceiling; the actual mapping is greater than 75K)
-    income_mapper = {1:5000, 2:7500, 3:10000, 4:12500, 5:15000, 6:20000, 7:25000, 8:30000, 9:35000, 10:40000, 11:50000, 12:60000, 13:75000, 14:100000}
-    df_family = df_family.replace({'Family_Income':income_mapper})
-
-    df_family['Income_Per_Working_Family_Member'] = df_family['Family_Income']/df_family['Num_Working_Family_Members']
-
-    df_family = df_family.replace(np.inf,'NA')
-
-    df_family[df_family['Income_Per_Working_Family_Member']!='NA']
-
-    #Differentiate between df_family rows with metro codes and those without (use state instead)
-    df_family_metro = df_family[df_family['Metro_Code']!=0]
-    df_family_state = df_family[df_family['Metro_Code']==0]
-    '''
-    #####################################################################################################################
 
     df_p['LivingWage_Category'] = np.where((df_p['Num_Family_Adults']==1)&(df_p['Num_Working_Family_Members']==1)&(df_p['Num_Children_Dependent']==0),'1Adult-W',np.where((df_p['Num_Family_Adults']==1)&(df_p['Num_Working_Family_Members']==1)&(df_p['Num_Children_Dependent']==1),'1Adult_1Child-W',np.where((df_p['Num_Family_Adults']==1)&(df_p['Num_Working_Family_Members']==1)&(df_p['Num_Children_Dependent']==2),'1Adult_2Child-W',np.where((df_p['Num_Family_Adults']==1)&(df_p['Num_Working_Family_Members']==1)&(df_p['Num_Children_Dependent']>=3),'1Adult_3Child-W',np.where((df_p['Num_Family_Adults']>=2)&(df_p['Num_Working_Family_Members']==1)&(df_p['Num_Children_Dependent']==0),'2Adult1W-W',np.where((df_p['Num_Family_Adults']>=2)&(df_p['Num_Working_Family_Members']==1)&(df_p['Num_Children_Dependent']==1),'2Adult1W_1Child-W',np.where((df_p['Num_Family_Adults']>=2)&(df_p['Num_Working_Family_Members']==1)&(df_p['Num_Children_Dependent']==2),'2Adult1W_2Child-W',np.where((df_p['Num_Family_Adults']>=2)&(df_p['Num_Working_Family_Members']==1)&(df_p['Num_Children_Dependent']>=3),'2Adult1W_3Child-W',np.where((df_p['Num_Family_Adults']>=2)&(df_p['Num_Working_Family_Members']>=2)&(df_p['Num_Children_Dependent']==0),'2Adult-W',np.where((df_p['Num_Family_Adults']>=2)&(df_p['Num_Working_Family_Members']>=2)&(df_p['Num_Children_Dependent']==1),'2Adult_1Child-W',np.where((df_p['Num_Family_Adults']>=2)&(df_p['Num_Working_Family_Members']>=2)&(df_p['Num_Children_Dependent']==2),'2Adult_2Child-W',np.where((df_p['Num_Family_Adults']>=2)&(df_p['Num_Working_Family_Members']>=2)&(df_p['Num_Children_Dependent']>=3),'2Adult_3Child-W',np.where(df_p['Employed']==1,'1Adult-W','NA')))))))))))))
 
@@ -117,143 +94,27 @@ def extract_record(df,yr,m,df_wage,df_wage_state):
 
     df_p.loc[(df_p['LivingWage_Category']!='NA')&(df_p['LivingWage'].isnull()),'LivingWage'] = df_p.merge(df_wage_state,on=['State_FIPS','Year','LivingWage_Category'],how='left')[(df_p['LivingWage_Category']!='NA')&(df_p['LivingWage'].isnull())]['LivingWage_y']
     
-    
-    '''
-    df_lw = df_lw[['Year','Metro_Code','1Adult-W', '1Adult_1Child-W','1Adult_2Child-W', '1Adult_3Child-W', '2Adult1W-W', '2Adult1W_1Child-W','2Adult1W_2Child-W', '2Adult1W_3Child-W', '2Adult-W', '2Adult_1Child-W','2Adult_2Child-W', '2Adult_3Child-W']]
-    df_lw_state = df_lw_state[['Year','State_FIPS','1Adult-W', '1Adult_1Child-W','1Adult_2Child-W', '1Adult_3Child-W', '2Adult1W-W', '2Adult1W_1Child-W','2Adult1W_2Child-W', '2Adult1W_3Child-W', '2Adult-W', '2Adult_1Child-W','2Adult_2Child-W', '2Adult_3Child-W']]
-
-    #Get metro codes where 1 years of data is missing
-    fours = df_lw['Metro_Code'].value_counts()[df_lw['Metro_Code'].value_counts()==4].index
-
-    for f in fours:
-        four = df_lw[df_lw['Metro_Code']==f]
-        years = four['Year'].values
-        missing = set([2016,2017,2018,2019,2020])-set(years)
-        missing = missing.pop()
-        year_low = missing-1
-        year_hi = missing+1
-        row = (four[four['Year']==year_low].values+four[four['Year']==year_hi].values)/2
-        df_lw.loc[len(df_lw)] = row[0]
-    
-    df_lw = df_lw.astype({'Year':int, 'Metro_Code':int})
-
-    #keep only metro codes with 4 or 5 values between 20016 and 2020
-    metro_list = list(df_lw['Metro_Code'].value_counts()[df_lw['Metro_Code'].value_counts()==5].index)
-    df_lw = df_lw[df_lw['Metro_Code'].isin(metro_list)]
-    df_lw = df_lw.sort_values('Year').reset_index(drop=True)
-    df_lw = pd.melt(df_lw,id_vars=['Year', 'Metro_Code'],value_vars=['1Adult-W', '1Adult_1Child-W', '1Adult_2Child-W','1Adult_3Child-W', '2Adult1W-W', '2Adult1W_1Child-W','2Adult1W_2Child-W', '2Adult1W_3Child-W', '2Adult-W', '2Adult_1Child-W','2Adult_2Child-W', '2Adult_3Child-W']).rename(columns={'variable':'LivingWage_Category','value':'LivingWage'})
-
-    df_lw_state = pd.melt(df_lw_state,id_vars=['Year', 'State_FIPS'],value_vars=['1Adult-W', '1Adult_1Child-W', '1Adult_2Child-W','1Adult_3Child-W', '2Adult1W-W', '2Adult1W_1Child-W','2Adult1W_2Child-W', '2Adult1W_3Child-W', '2Adult-W', '2Adult_1Child-W','2Adult_2Child-W', '2Adult_3Child-W']).rename(columns={'variable':'LivingWage_Category','value':'LivingWage'})
-
-    #Get average yearly growth of wage variables per metro code
-    df_wage = df_lw.copy()
-    df_wage['Yearly_Growth'] = df_wage.groupby(['Metro_Code','LivingWage_Category'])['LivingWage'].pct_change()
-    df_growth = pd.DataFrame(df_wage.groupby(['Metro_Code','LivingWage_Category'])['Yearly_Growth'].mean()).reset_index()
-
-    cats = list(df_wage['LivingWage_Category'].unique())
-
-    #Setting 2016 Growth rate values as average of 2017,2018,2019 and 2020 gorwth rates
-    for cat in cats:
-        df_wage.loc[(df_wage.Year==2016)&(df_wage['LivingWage_Category']==cat),'Yearly_Growth'] = df_wage[(df_wage.Year==2016)&(df_wage['LivingWage_Category']==cat)].merge(df_growth,on=['Metro_Code','LivingWage_Category'])['Yearly_Growth_y'].values
-
-    #Setting 1995-2015 living wage values
-    for year in range(2015,1994,-1):
-        for cat in cats:
-            df_new = df_wage[(df_wage.Year==(year+1))&(df_wage['LivingWage_Category']==cat)][['Metro_Code','Yearly_Growth']]
-            df_new['Year'] = year
-            df_new['LivingWage_Category'] = cat
-            df_new['LivingWage'] = df_wage[(df_wage.Year==(year+1))&(df_wage['LivingWage_Category']==cat)]['LivingWage']/(1+df_wage[(df_wage.Year==(year+1))&(df_wage['LivingWage_Category']==cat)]['Yearly_Growth'])
-            df_wage = df_wage.append(df_new).sort_values('Year').reset_index(drop=True)    
-
-    df_wage['Year'] = df_wage['Year'].astype(str)
-    df_wage = df_wage[['Year','Metro_Code','LivingWage_Category','LivingWage']]
-
-    df_p = df_p.merge(df_wage,on=['Metro_Code','Year','LivingWage_Category'],how='left')
-    '''
-    ######################################################################################################################
-
-    '''
-    #Get average yearly growth of 1Adult-W variable per metro code
-    df_wage = df_lw[['Year','Metro_Code','1Adult-W']]
-    df_wage['Yearly_Growth'] = df_wage.groupby('Metro_Code')['1Adult-W'].pct_change()
-    df_growth = pd.DataFrame(df_wage.groupby('Metro_Code')['Yearly_Growth'].mean()).reset_index()
-
-    #Set previous year values according to average growth rate calculated
-
-    #Setting 2016 Growth rate values as average of 4 others
-    df_wage.loc[df_wage.Year==2016,'Yearly_Growth'] = df_wage[df_wage.Year==2016].merge(df_growth,on='Metro_Code')['Yearly_Growth_y'].values
-
-    #Setting 1995-2015 1Adult-W values
-    for year in range(2015,1994,-1):
-        df_new = df_wage[df_wage.Year==(year+1)][['Metro_Code','Yearly_Growth']]
-        df_new['Year'] = year
-        df_new['1Adult-W'] = df_wage[df_wage.Year==(year+1)]['1Adult-W']/(1+df_wage[df_wage.Year==(year+1)]['Yearly_Growth'])
-        df_wage = df_wage.append(df_new).sort_values('Year').reset_index(drop=True)    
-
-    df_wage['Year'] = df_wage['Year'].astype(str)
-    df_wage = df_wage[['Year','Metro_Code','1Adult-W']]
-
-    df_p = df_p.merge(df_wage,on=['Metro_Code','Year'],how='left')
-    # df_p = df_p.merge(df_lw,on=['Year','Metro_Code'],how='left')
-    '''
-    
-
-    
-
-
-    '''
-    #Hourly Wages
-    wages = [i for i in df_p[(df_p['Hourly_Rate_Recode'].isin([-1,0])==False)&(df_p['Employed']==1)]['Hourly_Rate_Recode'].value_counts().index]
-
-    #Number employed with hourly wage data
-    employed_hourly = len(df_p[(df_p['Hourly_Rate_Recode'].isin([-1,0])==False)&(df_p['Employed']==1)])
-
-    #Assuming $11 living wage
-    under = [i for i in df_p[(df_p['Hourly_Rate_Recode'].isin([-1,0])==False)&(df_p['Employed']==1)]['Hourly_Rate_Recode'].values if int(i)<1100]
-    num_under = len(under)
-
-    #Amount of unemployment
-    under_lw = len(under)-np.sum([i/1100 for i in under])
-
-    #Rate of unemployment
-    under_lw_rate = under_lw/employed_hourly
-    '''
-    
-    #Look at usual hours and weekly earnings
-
-    #Identifying individual people
-    # iden = pd.DataFrame(df_p.groupby(['Age','Sex','Race','Hispanic','Country_of_birth','Mother_Country_of_birth','Type_of_mother','Father_Country_of_birth','Type_of_father','When_Serve','Immigrant_Year_Entry','Citizenship_Status','High_School_Diploma','Highest_Grade_GED'])['SID'].count()).reset_index()
-    # iden = iden[iden['Age'].astype(int)>14]
-
-
-    #Weekly Earnings divided by usual hours should equal hourly rate!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    #2016: 13864 Weekly earnings, 6161 usual hours
-    '''
-    df_comp = pd.DataFrame()
-    
-    df_comp['Hourly_Rate_Calc'] = df_p[(df_p['Weekly_Earnings'].isin([-1,0])==False)&(df_p['Employed']==1)]['Weekly_Earnings']/df_p[(df_p['Usual_Hours'].isin([-1,0])==False)&(df_p['Employed']==1)]['Usual_Hours']
-
-    df_comp = pd.DataFrame(df_comp[df_comp['Hourly_Rate_Calc'].isnull()==False])
-
-    df_comp['Hourly_Rate_Recode'] = pd.DataFrame(df_p[(df_p['Hourly_Rate_Recode'].isin([-1,0])==False)&(df_p['Employed']==1)]['Hourly_Rate_Recode']).loc[df_comp.index.values]
-    '''
     #Next:
     #Extrapolate %hourly wages below living wage level to all employed w/in data?
     
     #Divide Weekly Earnings by hours per week to get hourly earnings. Extrapolate to rest of employed thats missing data
 
-    df_comp2 = pd.DataFrame()
-    df_comp2['Weekly_Earnings'] = df_p[(df_p['Weekly_Earnings'].isin([-1,0])==False)&(df_p['Employed']==1)&(df_p['Hours_per_week'].isin([-1,-4])==False)&(df_p['LivingWage'].isnull()==False)]['Weekly_Earnings']/100
-    df_comp2['Hours_per_week'] = df_p[(df_p['Weekly_Earnings'].isin([-1,0])==False)&(df_p['Employed']==1)&(df_p['Hours_per_week'].isin([-1,-4])==False)&(df_p['LivingWage'].isnull()==False)]['Hours_per_week']
-    df_comp2['Hourly_Earnings'] = df_comp2['Weekly_Earnings']/df_comp2['Hours_per_week']
-    df_comp2['LivingWage'] = df_p[(df_p['Weekly_Earnings'].isin([-1,0])==False)&(df_p['Employed']==1)&(df_p['Hours_per_week'].isin([-1,-4])==False)&(df_p['LivingWage'].isnull()==False)]['LivingWage']
+    df_comp = pd.DataFrame()
+    df_comp['Weekly_Earnings'] = df_p[(df_p['Weekly_Earnings'].isin([-1,0])==False)&(df_p['Employed']==1)&(df_p['Hours_per_week'].isin([-1,-4])==False)&(df_p['LivingWage'].isnull()==False)]['Weekly_Earnings']/100
+    df_comp['Hours_per_week'] = df_p[(df_p['Weekly_Earnings'].isin([-1,0])==False)&(df_p['Employed']==1)&(df_p['Hours_per_week'].isin([-1,-4])==False)&(df_p['LivingWage'].isnull()==False)]['Hours_per_week']
+    df_comp['Hourly_Earnings'] = df_comp['Weekly_Earnings']/df_comp['Hours_per_week']
+    df_comp['LivingWage'] = df_p[(df_p['Weekly_Earnings'].isin([-1,0])==False)&(df_p['Employed']==1)&(df_p['Hours_per_week'].isin([-1,-4])==False)&(df_p['LivingWage'].isnull()==False)]['LivingWage']
+    df_comp['Wage_Ratio'] = (df_comp['LivingWage']-df_comp['Hourly_Earnings'])/df_comp['LivingWage']
 
+    df_p = df_p.merge(df_comp[['Hourly_Earnings','Wage_Ratio']],how='left',left_index=True,right_index=True)
+
+    '''
     #Partial wage unemployment
-    comp2_unemployment = (1-(df_comp2[df_comp2['Hourly_Earnings']<df_comp2['LivingWage']]['Hourly_Earnings']/df_comp2[df_comp2['Hourly_Earnings']<df_comp2['LivingWage']]['LivingWage'])).values.sum()
+    comp_unemployment = (1-(df_comp[df_comp['Hourly_Earnings']<df_comp['LivingWage']]['Hourly_Earnings']/df_comp[df_comp['Hourly_Earnings']<df_comp['LivingWage']]['LivingWage'])).values.sum()
     # comp2_unemployment = (1-(df_comp2[df_comp2['Hourly_Earnings']<df_comp2['1Adult-W']]['Hourly_Earnings']/df_comp2['1Adult-W'])).values.sum()
 
     #Scaled to full employed list
-    wage_unemployed = (comp2_unemployment/len(df_comp2))*len(df_p[df_p['Employed']==1])
+    wage_unemployed = (comp_unemployment/len(df_comp))*len(df_p[df_p['Employed']==1])
 
     u3_unemployed = len(df_p[df_p['LF_recode'].isin([' 3',' 4'])])
 
@@ -262,12 +123,12 @@ def extract_record(df,yr,m,df_wage,df_wage_state):
     #Almost double the u3 rate
     wage_adjusted_rate = (u3_unemployed+wage_unemployed)/(u3_unemployed+u3_employed)
     u3rate = (u3_unemployed)/(u3_unemployed+u3_employed)
-
+    '''
     ######################################################################################################################################
 
-    df_p = df_p.drop(columns=['Ref_person','Person_line_num']).reset_index(drop=True)
+    df_p = df_p.drop(columns=['Ref_person','Person_line_num','HHID2','Mother_Country_of_birth','Type_of_mother','Father_Country_of_birth','Type_of_father','Citizenship_Status','Immigrant_Year_Entry','When_Serve','High_School_Diploma','Highest_Grade_GED','Family_Income','Household_Members','Family_Recode','Periodicity','Hourly_Status','Usual_Hours','Hourly_Pay_Main','Hourly_Rate_Out','Hourly_Rate_Recode','Weekly_Earnings','Overtime_Weekly','Overtime_Weekly2','Weeks_Paid','Num_Children_Dependent','Num_Family_Adults','Employed','Num_Working_Family_Members','Working_Individual','Num_Working_Individual']).reset_index(drop=True)
 
-    return df_p, wage_adjusted_rate, u3rate, df_lw
+    return df_p
 
 
 
@@ -327,12 +188,12 @@ def livingwage(df_lw,col):
 
 if __name__=='__main__':
     #Where raw files (.dat) are stored on local computer/external drive
-    # fp = '/media/dhense/Elements/PublicData/cps_files/'
-    fp = '/home/dhense/PublicData/cps_files/'
+    fp = '/media/dhense/Elements/PublicData/cps_files/'
+    # fp = '/home/dhense/PublicData/cps_files/'
 
     #Where you would like to save preprocessed csv's on local computer/external drive
-    # export_path = '/media/dhense/Elements/PublicData/cps_csv_files/'
-    export_path = '/home/dhense/PublicData/cps_files/'
+    export_path = '/media/dhense/Elements/PublicData/cps_csv_files/'
+    # export_path = '/home/dhense/PublicData/cps_files/'
 
     #Living Wage data
     df_lw = pd.read_csv('/home/dhense/PublicData/Economic_analysis/intermediate_files/livingwagemetro.csv')
@@ -341,19 +202,19 @@ if __name__=='__main__':
     df_wage = livingwage(df_lw,'Metro_Code')
     df_wage_state = livingwage(df_lw_state,'State_FIPS')
 
-    # months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
-    months = ['jan']
+    months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
+    # months = ['jan']
     months_dict = {'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,'jul':7,'aug':8,'sep':9,'oct':10,'nov':11,'dec':12}
 
 
     tic = time.perf_counter()
-    for year in range(1999,2000):
+    for year in range(1999,2021):
         for m in months:
             if year==2020 and m=='sep':
                 break
             df_p = pd.read_csv(fp+str(year)+'/'+m+str(year)[-2:]+'pub.dat')
-            df_p, wage_adjusted_rate, u3rate, df_lw = extract_record(df_p,str(year),str(months_dict[m]),df_wage,df_wage_state)
+            df_p = extract_record(df_p,str(year),str(months_dict[m]),df_wage,df_wage_state)
             df_p.drop_duplicates(subset='PID',keep=False, inplace=True)
             df_p.to_csv(export_path+'cps_'+m+str(year)+'.csv',index=False)
     toc = time.perf_counter()
-    print(f"Exports took {toc - tic:0.1f} seconds") 
+    print(f"Exports took {toc - tic:0.1f} seconds")
