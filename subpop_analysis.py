@@ -61,11 +61,14 @@ def growth(df,start_year,end_year,period,subpop=None,start_month='jan',end_month
 
 if __name__=='__main__':
     pickle_path = '/home/dhense/PublicData/Economic_analysis/intermediate_files/cps/'
+    import_path = '/home/dhense/PublicData/Economic_analysis/'
 
-    print("...loading pickle")
-    tmp = open('/home/dhense/PublicData/Economic_analysis/intermediate_files/subpop_data.pickle','rb')
-    df = pickle.load(tmp)
-    tmp.close()
+    # print("...loading pickle")
+    # tmp = open('/home/dhense/PublicData/Economic_analysis/intermediate_files/subpop_data.pickle','rb')
+    # df = pickle.load(tmp)
+    # tmp.close()
+
+    df = pd.read_csv(import_path+'subpop_data.csv')
 
     #Remove brackets and curly braces from SubPop column
     df['SubPop'] = df['SubPop'].str.replace(r'[','').str.replace(r']','').str.replace(r'{','').str.replace(r'}','')
@@ -83,11 +86,11 @@ if __name__=='__main__':
     months_dict = {'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,'jul':7,'aug':8,'sep':9,'oct':10,'nov':11,'dec':12}
     df['Month'] = df['Month'].map(lambda x: months_dict[x])
 
-    period = 1
-    start_year = 1999
-    end_year = 1999
+    period = 20
+    start_year = 2000
+    end_year = 2019
 
-    u3_growth = growth(df,start_year,end_year,period,start_month=4,end_month=8,roll_avg=3,stat='U3_weighted')
+    u3_growth = growth(df,start_year,end_year,period,start_month=1,end_month=12,roll_avg=3,stat='U3_Rate')
 
 
     #To add rolling avrage for months - turn months into ints, use between in mask?

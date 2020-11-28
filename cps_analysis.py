@@ -339,7 +339,7 @@ def calc_percentages(df_cps):
 
 if __name__=='__main__':
     import_path = '/home/dhense/PublicData/Economic_analysis/intermediate_files/cps_csv/'
-
+    export_path = '/home/dhense/PublicData/Economic_analysis/'
 
 
 
@@ -412,8 +412,10 @@ if __name__=='__main__':
 
     toc_count=toc1_count=toc2_count=toc3_count=toc4_count=toc5_count=toc6_count=0
 
-    for year in range(1999,2000):
+    for year in range(1999,2021):
         for m in months:
+            if year==2020 and m=='sep':
+                break
             # print("...loading pickle")
             # tmp = open(pickle_path+'cps_'+m+str(year)+'.pickle','rb')
             # df = pickle.load(tmp)
@@ -518,20 +520,22 @@ if __name__=='__main__':
 
                 df_data = df_data.append(data).reset_index(drop=True)
                 '''
-            toc = time.perf_counter()
-            toc_count += toc-tic    
-            print(f"Subpop calc took {toc_count:0.1f} seconds")    
-    '''
+    toc = time.perf_counter()
+    toc_count += toc-tic    
+    print(f"Subpop calc took {toc_count:0.1f} seconds")    
+    
     #get subpops which have values for every month in dataset
     df_data['SubPop'] = df_data['SubPop'].astype(str)
-    subpops = df_data.groupby('SubPop')['Month'].count()[df_data.groupby('SubPop')['Month'].count()==12].index
+    df_data['YearMonth'] = df_data['Year'].astype(str)+df_data['Month']
+    subpops = df_data.groupby('SubPop')['YearMonth'].count()[df_data.groupby('SubPop')['YearMonth'].count()==260].index
     df_data = df_data[df_data['SubPop'].isin(subpops)]
+    df_data.to_csv(export_path+'subpop_data.csv',index=False)
 
-    print("...saving pickle")
-    tmp = open('/home/dhense/PublicData/Economic_analysis/intermediate_files/subpop_data.pickle','wb')
-    pickle.dump(df_data,tmp)
-    tmp.close()
-    '''
+    # print("...saving pickle")
+    # tmp = open('/home/dhense/PublicData/Economic_analysis/intermediate_files/subpop_data.pickle','wb')
+    # pickle.dump(df_data,tmp)
+    # tmp.close()
+    
 '''
     print(f"DataFrame filter took {toc_count:0.1f} seconds") 
     print(f"Recode counts took {toc1_count:0.1f} seconds")
