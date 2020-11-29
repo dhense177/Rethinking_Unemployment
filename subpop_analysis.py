@@ -78,20 +78,46 @@ if __name__=='__main__':
     for k,v in age_groups.items():
         df.loc[df['SubPop'].str.contains(k),'SubPop'] = df[df['SubPop'].str.contains(k)]['SubPop'].str.replace(k,v)
 
-    # schema = StructType([
-    #         StructField('Year', IntegerType(), True),StructField('Month', StringType(), True),StructField('SubPop', StringType(), True),StructField('Num_employed', IntegerType(), True),StructField('Num_unemployed', IntegerType(), True),StructField('Num_LF', IntegerType(), True),StructField('Num_total', IntegerType(), True),StructField('LFPR', FloatType(), True),StructField('UR', FloatType(), True),StructField('UR_weighted', FloatType(), True),StructField('U6', FloatType(), True),StructField('U6_weighted', FloatType(), True)
-    # ])
-
     #Turn month field into int
     months_dict = {'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,'jul':7,'aug':8,'sep':9,'oct':10,'nov':11,'dec':12}
     df['Month'] = df['Month'].map(lambda x: months_dict[x])
+
+    #Only keep pop percentage greater than 1%
+    df = df[df['Pop_percentage']>0.01]
 
     period = 20
     start_year = 2000
     end_year = 2019
 
-    u3_growth = growth(df,start_year,end_year,period,start_month=1,end_month=12,roll_avg=3,stat='U3_Rate')
+    u3_growth = growth(df,2000,2019,20,start_month=1,end_month=12,roll_avg=3,stat='U3_Rate')
+    u6_growth = growth(df,2000,2019,20,start_month=1,end_month=12,roll_avg=3,stat='U6_Rate')
+    u3_lfpr_growth = growth(df,2000,2019,20,start_month=1,end_month=12,roll_avg=3,stat='U3_LFPR')
+    u6_lfpr_growth = growth(df,2000,2019,20,start_month=1,end_month=12,roll_avg=3,stat='U6_LFPR')
 
+    growth20 = reduce(lambda  left,right: pd.merge(left,right,on=['SubPop','Start_month','Start_year','End_month','End_year','Period'], how='outer'), [u3_growth,u6_growth,u3_lfpr_growth,u6_lfpr_growth])
+
+
+    u3_growth = growth(df,2007,2009,3,start_month=12,end_month=6,roll_avg=3,stat='U3_Rate')
+    u6_growth = growth(df,2007,2009,3,start_month=12,end_month=6,roll_avg=3,stat='U6_Rate')
+    u3_lfpr_growth = growth(df,2007,2009,3,start_month=12,end_month=6,roll_avg=3,stat='U3_LFPR')
+    u6_lfpr_growth = growth(df,2007,2009,3,start_month=12,end_month=6,roll_avg=3,stat='U6_LFPR')
+
+    growth_gr = reduce(lambda  left,right: pd.merge(left,right,on=['SubPop','Start_month','Start_year','End_month','End_year','Period'], how='outer'), [u3_growth,u6_growth,u3_lfpr_growth,u6_lfpr_growth])
+
+    u3_growth = growth(df,2007,2020,14,start_month=12,end_month=6,roll_avg=3,stat='U3_Rate')
+    u6_growth = growth(df,2007,2020,14,start_month=12,end_month=6,roll_avg=3,stat='U6_Rate')
+    u3_lfpr_growth = growth(df,2007,2020,14,start_month=12,end_month=6,roll_avg=3,stat='U3_LFPR')
+    u6_lfpr_growth = growth(df,2007,2020,14,start_month=12,end_month=6,roll_avg=3,stat='U6_LFPR')
+
+    growth_gr_now = reduce(lambda  left,right: pd.merge(left,right,on=['SubPop','Start_month','Start_year','End_month','End_year','Period'], how='outer'), [u3_growth,u6_growth,u3_lfpr_growth,u6_lfpr_growth])
+
+
+    #Periods to cover:
+    #   -Full 20 years
+    #   -begining of great recession until now
+    #   -great recession
+    #   -covid recession
+    #   -dot com bubble
 
     #To add rolling avrage for months - turn months into ints, use between in mask?
 

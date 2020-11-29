@@ -42,6 +42,9 @@ def calc_rates(df):
     # Unemployed main
     unemployed_self = df[(df['LF_recode'].isin(['Employed - at work','Employed - absent'])==False)&((df['LF_recode'].isin(['Unemployed - on layoff','Unemployed - looking']))|(df['Look_last_year']=='Yes')|(df['Look_last_month']=='Yes')|(df['Job_offered_week']=='Yes')|(df['Last_work']=='Within Last 12 Months')|(df['Reason_not_looking'].isin(['Believes No Work Available In Area Of Expertise','Couldnt Find Any Work','Lacks Necessary Schooling/Training','Employers Think Too Young Or Too Old','Other Types Of Discrimination','Cant Arrange Child Care']))|(df['Discouraged']=='Yes')|(df['Disabled']=='Yes'))]['Weight'].sum()
 
+    discouraged = df[(df['Discouraged']=='Yes')|(df['Reason_not_looking'].isin(['Believes No Work Available In Area Of Expertise','Couldnt Find Any Work']))]['Weight'].sum()
+
+
     #Get rid of 71.4% of disabled who dont meet other criteria given that 28.6% of disabled are due to work-related matters
     only_disabled = df[(df['Disabled']=='Yes')&((df['LF_recode'].isin(['Employed - at work','Employed - absent'])==False)&(df['LF_recode'].isin(['Unemployed - on layoff','Unemployed - looking'])==False)&(df['Look_last_year']!='Yes')&(df['Look_last_month']!='Yes')&(df['Job_offered_week']!='Yes')&(df['Last_work']!='Within Last 12 Months')&(df['Reason_not_looking'].isin(['Believes No Work Available In Area Of Expertise','Couldnt Find Any Work','Lacks Necessary Schooling/Training','Employers Think Too Young Or Too Old','Other Types Of Discrimination','Cant Arrange Child Care'])==False)&(df['Discouraged']!='Yes'))]['Weight'].sum()
 
@@ -52,7 +55,7 @@ def calc_rates(df):
     #Final calc for self_calc rate
     SelfRate = wagerate+ptrate+unemployment_self
 
-    return U3Rate, U6Rate, U3LFPR, U6LFPR, SelfRate, wagerate, ptrate
+    return U3Rate, U6Rate, U3LFPR, U6LFPR, SelfRate, wagerate, ptrate, (0.286*only_disabled)/(unemployed_self+employed_self), discouraged/(unemployed_self+employed_self)
 
 
 def calc_percentages(df_cps, rate):
@@ -131,13 +134,13 @@ if __name__=='__main__':
                 break
             df = pd.read_csv(import_path+'cps_'+m+str(year)+'.csv')
             df = assign_groups(df)
-            U3Rate, U6Rate, U3LFPR, U6LFPR, SelfRate, wagerate, ptrate = calc_rates(df)
+            U3Rate, U6Rate, U3LFPR, U6LFPR, SelfRate, wagerate, ptrate, disabled_rate, discouraged  = calc_rates(df)
             df.to_csv(import_path+'cps_'+m+str(year)+'.csv',index=False)
 
             data = pd.DataFrame([{'Year':year,'Month':m,'U3_Rate':U3Rate,'U3_LFPR':U3LFPR,'U6_Rate':U6Rate,'U6_LFPR':U6LFPR,'Self_Rate':SelfRate}])
             df_data = df_data.append(data).reset_index(drop=True)
 
-            df_s = pd.DataFrame([{'Year':year,'Month':m,'Self_Rate':SelfRate,'Wage_Component':wagerate,'PT_Component':ptrate}])
+            df_s = pd.DataFrame([{'Year':year,'Month':m,'Self_Rate':SelfRate,'Wage_Component':wagerate,'PT_Component':ptrate, 'Disabled_Component':disabled_rate, 'Discouraged_Component': discouraged}])
             df_self = df_self.append(df_s).reset_index(drop=True)
 
             percentages = calc_percentages(df,'U3')

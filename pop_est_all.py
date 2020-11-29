@@ -242,6 +242,47 @@ def process_state(df90s,df00s,df10s):
 
     return df_state
 
+def process_proj(df_proj):
+    df_proj.drop(['POP_'+str(i) for i in range(0,16)],axis=1, inplace=True)
+
+    df_proj['1'] = df_proj['POP_16']+df_proj['POP_17']+df_proj['POP_18']+df_proj['POP_19']
+    df_proj['2'] = df_proj['POP_20']+df_proj['POP_21']+df_proj['POP_22']+df_proj['POP_23']+df_proj['POP_24']
+    df_proj['3'] = df_proj['POP_25']+df_proj['POP_26']+df_proj['POP_27']+df_proj['POP_28']+df_proj['POP_29']
+    df_proj['4'] = df_proj['POP_30']+df_proj['POP_31']+df_proj['POP_32']+df_proj['POP_33']+df_proj['POP_34']
+    df_proj['5'] = df_proj['POP_35']+df_proj['POP_36']+df_proj['POP_37']+df_proj['POP_38']+df_proj['POP_39']
+    df_proj['6'] = df_proj['POP_40']+df_proj['POP_41']+df_proj['POP_42']+df_proj['POP_43']+df_proj['POP_44']
+    df_proj['7'] = df_proj['POP_45']+df_proj['POP_46']+df_proj['POP_47']+df_proj['POP_48']+df_proj['POP_49']
+    df_proj['8'] = df_proj['POP_50']+df_proj['POP_51']+df_proj['POP_52']+df_proj['POP_53']+df_proj['POP_54']
+    df_proj['9'] = df_proj['POP_55']+df_proj['POP_56']+df_proj['POP_57']+df_proj['POP_58']+df_proj['POP_59']
+    df_proj['10'] = df_proj['POP_60']+df_proj['POP_61']+df_proj['POP_62']+df_proj['POP_63']+df_proj['POP_64']
+    df_proj['11'] = df_proj['POP_65']+df_proj['POP_66']+df_proj['POP_67']+df_proj['POP_68']+df_proj['POP_69']
+    df_proj['12'] = df_proj['POP_70']+df_proj['POP_71']+df_proj['POP_72']+df_proj['POP_73']+df_proj['POP_74']
+    df_proj['13'] = df_proj['POP_75']+df_proj['POP_76']+df_proj['POP_77']+df_proj['POP_78']+df_proj['POP_79']
+    df_proj['14'] = df_proj['POP_80']+df_proj['POP_81']+df_proj['POP_82']+df_proj['POP_83']+df_proj['POP_84']
+    df_proj['15'] = df_proj['POP_85']+df_proj['POP_86']+df_proj['POP_87']+df_proj['POP_88']+df_proj['POP_89']+df_proj['POP_90']+df_proj['POP_91']+df_proj['POP_92']+df_proj['POP_93']+df_proj['POP_94']+df_proj['POP_95']+df_proj['POP_96']+df_proj['POP_97']+df_proj['POP_98']+df_proj['POP_99']+df_proj['POP_100']
+                
+    df_proj.drop(['POP_'+str(i) for i in range(16,101)],axis=1, inplace=True)
+
+    sex_mapper = {1:'Male',2:'Female'}
+    hispanic_mapper = {1:'Not Hispanic',2:'Hispanic'}
+    race_mapper = {1:'White Only',2:'Black Only',3:'Other',4:'Other',5:'Other',6:'Other'}
+
+    df_proj = df_proj.replace({'SEX':sex_mapper, 'ORIGIN':hispanic_mapper, 'RACE':race_mapper})
+    df_proj = df_proj[(df_proj['SEX']!=0)&(df_proj['ORIGIN']!=0)&(df_proj['RACE'].isin([0,7,8,9,10,11])==False)]
+
+    df_proj.drop('TOTAL_POP',axis=1,inplace=True)
+    df_proj = pd.melt(df_proj,id_vars=['SEX','ORIGIN','RACE','YEAR'], value_vars=['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15']).rename(columns={'variable':'Age_group','value':'POPESTIMATE_SUB','SEX':'Sex','ORIGIN':'Hispanic','RACE':'Race','YEAR':'Year'})
+
+    df_proj = pd.DataFrame(df_proj.groupby(['Sex','Race','Hispanic','Year','Age_group'])['POPESTIMATE_SUB'].sum()).reset_index()
+
+    # print("...saving pickle")
+    # tmp = open(picklepath+'intermediate_files/'+proj_pickle,'wb')
+    # pickle.dump(df_proj,tmp)
+    # tmp.close()
+
+    df_proj.to_csv('/home/dhense/PublicData/Economic_analysis/popproj.csv',index=False)
+
+    return df_proj
 
 
 if __name__=='__main__':
@@ -255,6 +296,7 @@ if __name__=='__main__':
     nat_pop_age_pickle = 'nat_pop_age.pickle'
     state_pop_pickle = 'state_pop.pickle'
     county90_pop_pickle = 'county90.pickle'
+    proj_pickle = 'projected.pickle'
 
 ################### National ###################
 
@@ -346,3 +388,6 @@ if __name__=='__main__':
 
     print(df_county_15plus.head())
     '''
+############## Projections ####################
+    df_proj  = pd.read_csv('/home/dhense/PublicData/popproj/np2017_d1.csv')
+    df_proj = process_proj(df_proj)
