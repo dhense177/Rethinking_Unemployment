@@ -131,9 +131,9 @@ if __name__=='__main__':
 
         year = url[28:32]
 
-        # for i in range(len(states)):
-        #     sleep(randint(1,5))
-        #     append_state_values(year, states[i], url, df)
+        for i in range(len(states)):
+            sleep(randint(1,5))
+            append_state_values(year, states[i], url, df)
 
         for i in range(len(metro_codes)):
             sleep(randint(1,5))    
@@ -144,7 +144,7 @@ if __name__=='__main__':
                 continue
 
     
-    # df = final_adjustments_state(df)
+    df = final_adjustments_state(df)
 
     toc = time.perf_counter()
     print(f"Parsing took {toc - tic:0.1f} seconds") 
@@ -152,7 +152,7 @@ if __name__=='__main__':
     print(len(df_metro))
     # print(set(states) - set(df['State_FIPS'].value_counts().index))
 
-    # df.to_csv(export_path+'livingwage.csv',index=False)
+    df.to_csv(export_path+'livingwage.csv',index=False)
     df_metro.to_csv(export_path+'livingwagemetro.csv',index=False)
 
 

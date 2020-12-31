@@ -11,7 +11,7 @@ def extract_record(df,yr,m,df_wage,df_wage_state):
             - Rows begin as single string of numerical values
             - Breaks them up into unique fields and inserts those values into Pandas DataFrame columns 
     '''
-    col_dict = {'HHID':(0,15),'HHID2':(70,75),'Ref_person':(117,119),'Person_line_num':(146,148),'Person_type':(160,162),'Age':(121,123),'Sex':(128,130),'Race':(138,140),'Hispanic':(140,142),'Marital_status':(124,126),'Country_of_birth':(162,165),'Mother_Country_of_birth':(165,168),'Type_of_mother':(891,893),'Father_Country_of_birth':(168,171),'Type_of_father':(889,891),'Citizenship_Status':(171,173),'Immigrant_Year_Entry':(175,177),'When_Serve':(875,877),'High_School_Diploma':(821,823),'Highest_Grade_GED':(823,825),'School_completed':(136,138),'Ever_active_duty':(130,132),'LF_recode':(179,181),'LF_recode2':(392,394),'Civilian_LF':(386,388),'Employed_nonfarm':(479,481),'Have_job':(205,207),'Unpaid_family_work':(183,185),'Recall_return':(276,278),'Recall_look':(280,282),'Job_offered':(331,333),'Job_offered_week':(358,360),'Available_ft':(249,251),'Job_search':(400,402),'Look_last_month':(293,295),'Look_last_year':(350,352),'Last_work':(564,566),'Discouraged':(388,390),'Retired':(566,568),'Disabled':(203,205),'Situation':(568,570),'FT_PT':(396,398),'FT_PT_status':(415,417),'Detailed_reason_part_time':(404,406),'Main_reason_part_time':(228,230),'Main_reason_not_full_time':(230,232),'Want_job':(346,348),'Want_job_ft':(226,228),'Want_job_ft_pt':(199,201),'Want_job_nilf':(417,419),'Reason_unemployment':(411,413),'Reason_not_looking':(348,350),'Hours_per_week':(223,226),'Hours_per_week_last':(242,244),'In_school':(574,576),'In_school_ft_pt':(576,578),'School_type':(578,580),'In_school_nilf':(580,582),'State_FIPS':(92,94),'County_FIPS':(100,103),'Metro_Code_Old':(96,100),'Metro_Size':(106,107),'Metro_Status':(104,105),'Region':(88,90),'Division':(90,91),'Family_Income':(38,40),'Household_Members':(58,60),'Family_Recode':(152,154),'Periodicity':(501,503),'Hourly_Status':(505,507),'Usual_Hours':(524,526),'Hourly_Pay_Main':(511,515),'Hourly_Rate_Out':(515,519),'Hourly_Rate_Recode':(519,523),'Weekly_Earnings':(526,534),'Overtime_Weekly':(539,547),'Overtime_Weekly2':(547,555),'Weeks_Paid':(558,560)}
+    col_dict = {'HHID':(0,15),'HHID2':(70,75),'Ref_person':(117,119),'Person_line_num':(146,148),'Person_type':(160,162),'Age':(121,123),'Sex':(128,130),'Race':(138,140),'Hispanic':(140,142),'Marital_status':(124,126),'Country_of_birth':(162,165),'Mother_Country_of_birth':(165,168),'Type_of_mother':(891,893),'Father_Country_of_birth':(168,171),'Type_of_father':(889,891),'Citizenship_Status':(171,173),'Immigrant_Year_Entry':(175,177),'When_Serve':(875,877),'High_School_Diploma':(821,823),'Highest_Grade_GED':(823,825),'School_completed':(136,138),'Ever_active_duty':(130,132),'LF_recode':(179,181),'LF_recode2':(392,394),'Civilian_LF':(386,388),'Employed_nonfarm':(479,481),'Have_job':(205,207),'Unpaid_family_work':(183,185),'Recall_return':(276,278),'Recall_look':(280,282),'Job_offered':(331,333),'Job_offered_week':(358,360),'Available_ft':(249,251),'Job_search':(400,402),'Look_last_month':(293,295),'Look_last_year':(350,352),'Last_work':(564,566),'Discouraged':(388,390),'Retired':(566,568),'Disabled':(203,205),'Situation':(568,570),'FT_PT':(396,398),'FT_PT_status':(415,417),'Detailed_reason_part_time':(404,406),'Main_reason_part_time':(228,230),'Main_reason_not_full_time':(230,232),'Want_job':(346,348),'Want_job_ft':(226,228),'Want_job_ft_pt':(199,201),'Want_job_nilf':(417,419),'Reason_unemployment':(411,413),'Reason_not_looking':(348,350),'Hours_per_week':(223,226),'Hours_per_week_last':(242,244),'In_school':(574,576),'In_school_ft_pt':(576,578),'School_type':(578,580),'In_school_nilf':(580,582),'State_FIPS':(92,94),'County_FIPS':(100,103),'Metro_Code_Old':(96,100),'Metro_Size':(106,107),'Metro_Status':(104,105),'Region':(88,90),'Division':(90,91),'Family_Income':(38,40),'Household_Members':(58,60),'Family_Recode':(152,154),'Periodicity':(501,503),'Hourly_Status':(505,507),'Usual_Hours':(524,526),'Hourly_Pay_Main':(511,515),'Hourly_Rate_Out':(515,519),'Hourly_Rate_Recode':(519,523),'Weekly_Earnings':(526,534),'Overtime_Weekly':(539,547),'Overtime_Weekly2':(547,555),'Weeks_Paid':(558,560),'Worker_Class':(431,433)}
 
     df_p = pd.DataFrame()
 
@@ -136,7 +136,7 @@ def livingwage(df_lw,col):
     df_lw = df_lw[['Year',col,'1Adult-W', '1Adult_1Child-W','1Adult_2Child-W', '1Adult_3Child-W', '2Adult1W-W', '2Adult1W_1Child-W','2Adult1W_2Child-W', '2Adult1W_3Child-W', '2Adult-W', '2Adult_1Child-W','2Adult_2Child-W', '2Adult_3Child-W']]
 
     if col == 'Metro_Code':
-        #Get metro codes where 1 years of data is missing
+        #Get metro codes where 1 year of data is missing
         fours = df_lw['Metro_Code'].value_counts()[df_lw['Metro_Code'].value_counts()==4].index
 
         for f in fours:
@@ -151,7 +151,7 @@ def livingwage(df_lw,col):
         
         df_lw = df_lw.astype({'Year':int, 'Metro_Code':int})
 
-        #keep only metro codes with 4 or 5 values between 20016 and 2020
+        #keep only metro codes with 4 or 5 values between 2016 and 2020
         metro_list = list(df_lw['Metro_Code'].value_counts()[df_lw['Metro_Code'].value_counts()==5].index)
         df_lw = df_lw[df_lw['Metro_Code'].isin(metro_list)]
 
@@ -190,10 +190,10 @@ if __name__=='__main__':
     #Where raw files (.dat) are stored on local computer/external drive
     fp = '/media/dhense/Elements/PublicData/cps_files/'
     # fp = '/home/dhense/PublicData/cps_files/'
-
+    
     #Where you would like to save preprocessed csv's on local computer/external drive
     export_path = '/media/dhense/Elements/PublicData/cps_csv_files/'
-    # export_path = '/home/dhense/PublicData/cps_files/'
+
 
     #Living Wage data
     df_lw = pd.read_csv('/home/dhense/PublicData/Economic_analysis/intermediate_files/livingwagemetro.csv')
@@ -202,8 +202,8 @@ if __name__=='__main__':
     df_wage = livingwage(df_lw,'Metro_Code')
     df_wage_state = livingwage(df_lw_state,'State_FIPS')
 
-    months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
-    # months = ['jan']
+    # months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
+    months = ['aug']
     months_dict = {'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,'jul':7,'aug':8,'sep':9,'oct':10,'nov':11,'dec':12}
 
 

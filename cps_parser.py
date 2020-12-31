@@ -68,10 +68,12 @@ def var_mapper(df_cps,year):
     division_mapper = {1:'New England',2:'Mid-Atlantic',3:'East North Central',4:'West North Central',5:'South Atlantic',6:'East South Central',7:'West South Central',8:'Mountain',9:'Pacific'}
     state_mapper = {1:'AL',30:'MT',2:'AK',31:'NE',4:'AZ',32:'NV',5:'AR',33:'NH',6:'CA',34:'NJ',8:'CO',35:'NM',9:'CT',36:'NY',10:'DE',37:'NC',11:'DC',38:'ND',12:'FL',39:'OH',13:'GA',40:'OK',15:'HI',41:'OR',16:'ID',42:'PA',17:'IL',44:'RI',18:'IN',45:'SC',19:'IA',46:'SD',20:'KS',47:'TN',21:'KY',48:'TX',22:'LA',49:'UT',23:'ME',50:'VT',24:'MD',51:'VA',25:'MA',53:'WA',26:'MI',54:'WV',27:'MN',55:'WI',28:'MS',56:'WY',29:'MO'}
 
+    worker_class_mapper = {1:'Federal Government',2:'State Government',3:'Local Government',4:'Private For Profit',5:'Private Nonprofit',6:'Self-Employed Incorporated',7:'Self-Employed Unincorporated',8:'Without Pay',-1:'NA'}
+
     df_cps['State'] = df_cps['State_FIPS']
 
 
-    df_cps = df_cps.replace({'Person_type':person_mapper, 'Sex':sex_mapper, 'Race':race_mapper, 'Hispanic':hispanic_mapper, 'Marital_status':marital_status_mapper, 'School_completed':school_completed_mapper, 'Ever_active_duty':active_duty_mapper,'LF_recode':lf_recode_mapper, 'LF_recode2':lf_recode2_mapper, 'Civilian_LF':civilian_lf_mapper, 'Country_of_birth':country_birth_mapper, 'Employed_nonfarm':employed_nonfarm_mapper, 'Recall_return':recall_return_mapper, 'Recall_look':recall_look_mapper,'Job_offered':job_offered_mapper,'Job_offered_week':job_offered_week_mapper, 'Available_ft':available_ft_mapper, 'Job_search':job_search_mapper, 'Look_last_month':look_last_month_mapper, 'Look_last_year':look_last_year_mapper, 'Last_work':last_work_mapper, 'Discouraged':discouraged_mapper, 'Retired':retired_mapper, 'Disabled':disabled_mapper, 'Situation': situation_mapper, 'FT_PT':ft_pt_mapper, 'FT_PT_status':ft_pt_status_mapper, 'Detailed_reason_part_time':detailed_pt_mapper, 'Main_reason_part_time':main_pt_mapper, 'Main_reason_not_full_time':main_not_ft_mapper, 'Have_job':have_job_mapper, 'Want_job':want_job_mapper, 'Want_job_ft':want_job_ft_mapper, 'Want_job_ft_pt':want_job_ft_pt_mapper, 'Want_job_nilf':want_job_nilf_mapper, 'Reason_unemployment':reason_unemployment_mapper, 'Reason_not_looking':reason_not_looking_mapper, 'In_school':in_school_mapper, 'In_school_ft_pt':in_school_ft_pt_mapper, 'School_type':school_type_mapper,'In_school_nilf':in_school_nilf_mapper,'Region':region_mapper,'Division':division_mapper,'State':state_mapper})
+    df_cps = df_cps.replace({'Person_type':person_mapper, 'Sex':sex_mapper, 'Race':race_mapper, 'Hispanic':hispanic_mapper, 'Marital_status':marital_status_mapper, 'School_completed':school_completed_mapper, 'Ever_active_duty':active_duty_mapper,'LF_recode':lf_recode_mapper, 'LF_recode2':lf_recode2_mapper, 'Civilian_LF':civilian_lf_mapper, 'Country_of_birth':country_birth_mapper, 'Employed_nonfarm':employed_nonfarm_mapper, 'Recall_return':recall_return_mapper, 'Recall_look':recall_look_mapper,'Job_offered':job_offered_mapper,'Job_offered_week':job_offered_week_mapper, 'Available_ft':available_ft_mapper, 'Job_search':job_search_mapper, 'Look_last_month':look_last_month_mapper, 'Look_last_year':look_last_year_mapper, 'Last_work':last_work_mapper, 'Discouraged':discouraged_mapper, 'Retired':retired_mapper, 'Disabled':disabled_mapper, 'Situation': situation_mapper, 'FT_PT':ft_pt_mapper, 'FT_PT_status':ft_pt_status_mapper, 'Detailed_reason_part_time':detailed_pt_mapper, 'Main_reason_part_time':main_pt_mapper, 'Main_reason_not_full_time':main_not_ft_mapper, 'Have_job':have_job_mapper, 'Want_job':want_job_mapper, 'Want_job_ft':want_job_ft_mapper, 'Want_job_ft_pt':want_job_ft_pt_mapper, 'Want_job_nilf':want_job_nilf_mapper, 'Reason_unemployment':reason_unemployment_mapper, 'Reason_not_looking':reason_not_looking_mapper, 'In_school':in_school_mapper, 'In_school_ft_pt':in_school_ft_pt_mapper, 'School_type':school_type_mapper,'In_school_nilf':in_school_nilf_mapper,'Region':region_mapper,'Division':division_mapper,'State':state_mapper,'Worker_Class':worker_class_mapper})
 
 
     if year != 1995:
@@ -201,17 +203,18 @@ if __name__=='__main__':
     df_pops.to_csv('/home/dhense/PublicData/Economic_analysis/popest_demo.csv',index=False)
     df_state.to_csv('/home/dhense/PublicData/Economic_analysis/popest.csv',index=False)
     
-    months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
-    # months=['jan']
+    # months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
+    months=['aug']
     months_dict = {'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,'jul':7,'aug':8,'sep':9,'oct':10,'nov':11,'dec':12}
 
     tic = time.perf_counter()
-
+    # biz_list = []
     for year in range(1999,2021):
         for m in months:
             if year==2020 and m=='sep':
                 break
             df_cps = pd.read_csv(fp+'cps_'+m+str(year)+'.csv')
+
             
             df_cps = var_mapper(df_cps,year)
             df_cps = df_cps[(df_cps['Person_type']=='Adult Civilian')]
@@ -219,6 +222,7 @@ if __name__=='__main__':
             df_cps = df_cps[df_cps.Age>15]
             df_cps = refine_vars(df_cps)
             df_cps = weight(df_cps)
+            # biz_list.append(len(df_cps[df_cps['Worker_Class'].isin(['Self-Employed Unincorporated','Self-Employed Incorporated'])])/len(df_cps))
 
             df_cps.to_csv(export_path+'cps_'+m+str(year)+'.csv',index=False)
     toc = time.perf_counter()

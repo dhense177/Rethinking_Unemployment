@@ -127,6 +127,7 @@ def process_90c(county90_pop_pickle):
         df90c = pd.DataFrame()
         for f in files:
             df = pd.read_csv(filepath+folders[0]+'/County/'+f,header=None)
+            # process_90c within process_90c? Something wrong...
             df = process_90c(df)
             df90c = df90c.append(df)
 
